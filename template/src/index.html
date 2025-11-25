@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="فروشگاه مهر سپهر؛ انتخاب هوشمند لوازم خانگی و آشپزخانه با تضمین کیفیت." />
+    <title>فروشگاه مهر سپهر | لوازم خانه و آشپزخانه</title>
+    <link rel="stylesheet" href="./output.css" />
+    <link rel="stylesheet" href="./styles/style.css" />
+</head>
+<body class="bg-slate-50 text-slate-900">
+    <a class="skip-link" href="#mainContent">پرش به محتوای اصلی</a>
+    <div class="site-shell lg:flex lg:min-h-screen">
+        <aside
+            class="sidebar"
+            id="mainSidebar"
+            data-sidebar
+            aria-label="منوی کناری"
+            aria-hidden="true"
+        >
+            <div class="sidebar-header">
+                <button class="sidebar-close lg:hidden" type="button" aria-label="بستن منو" data-sidebar-close>
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <a class="sidebar-brand" href="#" aria-label="بازگشت به صفحه اصلی">
+                    <img src="./assets/images/logos.png" alt="لوگوی مهر سپهر" />
+                    <div>
+                        <p class="text-lg font-bold">Mehr Sepehr</p>
+                        <p class="text-sm text-slate-500">مهر سپهر آریا قشم</p>
+                    </div>
+                </a>
+            </div>
+            <nav class="sidebar-nav" aria-label="دسترسی سریع">
+                <a href="#hero" class="sidebar-link">
+                    <i class="fa-solid fa-house"></i>
+                    خانه
+                </a>
+                <a href="#cookware" class="sidebar-link">
+                    <i class="fa-solid fa-kitchen-set"></i>
+                    سرویس پخت و پز
+                </a>
+                <a href="#kitchen-cta" class="sidebar-link">
+                    <i class="fa-solid fa-bowl-food"></i>
+                    آشپزخانه
+                </a>
+                <a href="#appliances" class="sidebar-link">
+                    <i class="fa-solid fa-snowflake"></i>
+                    یخچال و فریزر
+                </a>
+                <a href="#contact" class="sidebar-link">
+                    <i class="fa-solid fa-phone"></i>
+                    تماس با ما
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div>
+                    <p class="text-sm text-slate-500 mb-1">شماره تماس</p>
+                    <a class="text-base font-semibold text-slate-900" href="tel:02128423963">
+                        021-28423963
+                    </a>
+                </div>
+                <div>
+                    <p class="text-sm text-slate-500 mb-1">ایمیل</p>
+                    <a class="text-base font-semibold text-slate-900 break-all" href="mailto:gablame.com@gmail.com">
+                        gablame.com@gmail.com
+                    </a>
+                </div>
+                <div class="sidebar-social">
+                    <a href="https://instagram.com" target="_blank" rel="noreferrer" aria-label="اینستاگرام">
+                        <i class="fa-brands fa-instagram"></i>
+                    </a>
+                    <a href="https://wa.me" target="_blank" rel="noreferrer" aria-label="واتساپ">
+                        <i class="fa-brands fa-whatsapp"></i>
+                    </a>
+                    <a href="https://t.me" target="_blank" rel="noreferrer" aria-label="تلگرام">
+                        <i class="fa-brands fa-telegram"></i>
+                    </a>
+                </div>
+            </div>
+        </aside>
+        <div class="sidebar-overlay" data-sidebar-overlay></div>
+
+        <main id="mainContent" class="content-area flex-1 min-h-screen">
+            <header class="page-header border-b border-slate-200 bg-white/80 backdrop-blur">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
+                    <div class="flex flex-wrap items-center justify-between gap-4 py-6">
+                        <div class="flex items-center gap-3">
+                            <button
+                                class="lg:hidden text-2xl text-slate-600 hover:text-slate-900 transition"
+                                type="button"
+                                data-sidebar-toggle
+                                aria-controls="mainSidebar"
+                                aria-expanded="false"
+                            >
+                                <span class="sr-only">باز کردن منو</span>
+                                <i class="fa-solid fa-bars"></i>
+                            </button>
+                            <a href="#" class="lg:hidden flex items-center gap-3" aria-label="صفحه اصلی">
+                                <img class="w-12" src="./assets/images/logos.png" alt="لوگو مهر سپهر" />
+                                <span class="font-semibold text-base">مهر سپهر</span>
+                            </a>
+                        </div>
+                        <label class="relative flex-1 min-w-[220px] lg:max-w-md" for="headerSearch">
+                            <input
+                                id="headerSearch"
+                                type="search"
+                                placeholder="جستجو محصولات، برند یا دسته‌بندی"
+                                class="w-full rounded-2xl border border-slate-200 bg-slate-100 py-3 pr-12 pl-4 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                            />
+                            <i class="fa-solid fa-magnifying-glass absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        </label>
+                        <div class="flex items-center gap-3">
+                            <a href="#auth" class="btn btn-outline">
+                                ورود | ثبت‌نام
+                                <i class="fa-solid fa-right-to-bracket text-sm"></i>
+                            </a>
+                            <a href="#cart" class="btn btn-icon" aria-label="سبد خرید">
+                                <i class="fa-solid fa-cart-shopping"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <nav class="category-nav" aria-label="دسته‌بندی اصلی">
+                        <div class="category-track">
+                            <a href="#hero" class="category-link is-active">خانه</a>
+                            <a href="#cookware" class="category-link">پخت و پز</a>
+                            <a href="#kitchen-cta" class="category-link">آشپزخانه</a>
+                            <a href="#appliances" class="category-link">یخچال و فریزر</a>
+                            <a href="#promotions" class="category-link">پیشنهاد ویژه</a>
+                            <a href="#contact" class="category-link">پشتیبانی</a>
+                        </div>
+                    </nav>
+                </div>
+            </header>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-10 space-y-16 lg:space-y-20">
+                <!-- Hero -->
+                <section id="hero" class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                    <article class="hero-card">
+                        <img
+                            src="./assets/images/Living_Room_3D_Render_with_Interior_Design_by_NONAGON_studio.png"
+                            alt="دکوراسیون پذیرایی مدرن"
+                        />
+                        <div>
+                            <p class="hero-kicker">زیبایی پذیرایی</p>
+                            <h2>لحظات گرم کنار خانواده</h2>
+                            <p>کالکشن ظروف و دکوراسیون پذیرایی برای سلیقه‌های مدرن.</p>
+                        </div>
+                    </article>
+                    <article class="hero-card">
+                        <img src="./assets/images/DC4564-004-RT.jpg" alt="چیدمان آشپزخانه مدرن" />
+                        <div>
+                            <p class="hero-kicker">آشپزخانه رویایی</p>
+                            <h2>کارایی و زیبایی کنار هم</h2>
+                            <p>انتخاب هوشمند برای لوازم آشپزخانه با دوام بالا.</p>
+                        </div>
+                    </article>
+                    <article class="hero-card md:col-span-2 xl:col-span-1">
+                        <img src="./assets/images/FAW-StaubCastIron5-8e4d899b2c8445c9b5c58dc4551ffde2.jpeg" alt="ست هدیه ظروف" />
+                        <div>
+                            <p class="hero-kicker">هدیه دادن</p>
+                            <h2>هدایای خاص و متفاوت</h2>
+                            <p>ست‌های ویژه برای هدیه‌های به‌یادماندنی.</p>
+                        </div>
+                    </article>
+                </section>
+
+                <!-- Cooking CTA -->
+                <section
+                    id="cook-cta"
+                    class="cta-card grid gap-8 lg:grid-cols-[1.5fr_1fr] items-center overflow-hidden"
+                >
+                    <div>
+                        <p class="cta-kicker">مجموعه جدید</p>
+                        <h2>لحظات خوش آشپزی</h2>
+                        <p class="text-slate-600 mt-4">
+                            ابزارهای تازه برای طعم‌های بزرگ؛ مجموعه‌ای از تجهیزات مدرن که آشپزی روزانه را لذت‌بخش‌تر می‌کند.
+                        </p>
+                        <div class="mt-6 flex flex-wrap gap-3">
+                            <a href="#cookware" class="btn btn-primary">مشاهده محصولات</a>
+                            <a href="#brands" class="btn btn-ghost">برندهای محبوب</a>
+                        </div>
+                    </div>
+                    <div class="relative rounded-4xl overflow-hidden">
+                        <img
+                            src="./assets/images/vecteezy_healthy-vegetable-stew-cooked-on-stove-top-generated-by-ai_25184841.jpg"
+                            alt="خوراک سبزیجات تازه"
+                            class="h-full w-full object-cover"
+                        />
+                    </div>
+                </section>
+
+                <!-- Cookware products -->
+                <section id="cookware" class="space-y-6">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                            <p class="section-kicker">جدیدهای پخت و پز</p>
+                            <h2>سرویس‌های محبوب مهر سپهر</h2>
+                        </div>
+                        <a href="#store" class="text-blue-600 font-semibold hover:underline">مشاهده همه</a>
+                    </div>
+                    <div class="product-grid">
+                        <article class="product-card">
+                            <img src="./assets/images/IMG_20250920_112531_285.jpg" alt="سرویس قابلمه 25 پارچه MGS" class="product-card__cover" />
+                            <div class="product-card__body">
+                                <p class="badge">دسته: MGS</p>
+                                <h3>سرویس قابلمه 25 پارچه MGS مدل کره‌ای B</h3>
+                                <p class="product-card__meta">شناسه محصول: نامعلوم</p>
+                                <div class="product-card__actions">
+                                    <a href="#product-1" class="btn btn-soft">جزئیات</a>
+                                    <button class="btn btn-primary" type="button">افزودن به سبد</button>
+                                </div>
+                            </div>
+                        </article>
+                        <article class="product-card">
+                            <img src="./assets/images/WhatsApp-Image-2025-09-20-at-11.03.30-2.jpeg" alt="سرویس قابلمه 22 پارچه" class="product-card__cover" />
+                            <div class="product-card__body">
+                                <p class="badge">دسته: MGS</p>
+                                <h3>سرویس قابلمه 22 پارچه MGS مدل ایتالیا</h3>
+                                <p class="product-card__meta">شناسه محصول: نامعلوم</p>
+                                <div class="product-card__actions">
+                                    <a href="#product-2" class="btn btn-soft">جزئیات</a>
+                                    <button class="btn btn-primary" type="button">افزودن به سبد</button>
+                                </div>
+                            </div>
+                        </article>
+                        <article class="product-card">
+                            <img src="./assets/images/photo_2024-12-27_23-20-44.jpg" alt="تابه تکدست سایز 20" class="product-card__cover" />
+                            <div class="product-card__body">
+                                <p class="badge">دسته: MGS</p>
+                                <h3>تابه تکدست سایز 20 MGS طرح فورج</h3>
+                                <p class="product-card__meta">شناسه محصول: نامعلوم</p>
+                                <div class="product-card__actions">
+                                    <a href="#product-3" class="btn btn-soft">جزئیات</a>
+                                    <button class="btn btn-primary" type="button">افزودن به سبد</button>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <!-- Kitchen CTA -->
+                <section
+                    id="kitchen-cta"
+                    class="cta-card grid gap-8 lg:grid-cols-[1fr_1.5fr] items-center bg-amber-100/70 border-amber-200"
+                >
+                    <div class="relative rounded-4xl overflow-hidden order-2 lg:order-1">
+                        <img
+                            src="./assets/images/photo_2024-08-28_16-45-18.jpg"
+                            alt="نمای داخلی فروشگاه لوازم آشپزخانه"
+                            class="h-full w-full object-cover"
+                        />
+                    </div>
+                    <div class="order-1 lg:order-2">
+                        <p class="cta-kicker">همه جور لوازم آشپزخانه</p>
+                        <h2>کیفیت ممتاز با قیمت عادلانه</h2>
+                        <p class="text-slate-600 mt-4">
+                            از ابزار آماده‌سازی تا سرو، هر آنچه برای تکمیل آشپزخانه مدرن نیاز دارید را یک‌جا انتخاب کنید.
+                        </p>
+                        <div class="mt-6 flex flex-wrap gap-3">
+                            <a href="#store" class="btn btn-primary">مشاهده محصولات</a>
+                            <button class="btn btn-ghost" type="button">دریافت کاتالوگ</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Appliances -->
+                <section id="appliances" class="space-y-6">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                            <p class="section-kicker">جدیدهای یخچال و فریزر</p>
+                            <h2>انتخاب حرفه‌ای برای خانواده‌ها</h2>
+                        </div>
+                        <a href="#cold" class="text-blue-600 font-semibold hover:underline">مشاهده همه</a>
+                    </div>
+                    <div class="product-grid">
+                        <article class="product-card">
+                            <img src="./assets/images/e1c1d291f800e7c8f67e8b070549681c322dbe89_1603174412.jpg" alt="یخچال دوقلو 28 فوت" class="product-card__cover" />
+                            <div class="product-card__body">
+                                <p class="badge">لوازم برقی خانگی</p>
+                                <h3>یخچال و فریزر دوقلو 28 فوت التتو</h3>
+                                <p class="product-card__meta">شناسه محصول: نامعلوم</p>
+                                <div class="product-card__actions">
+                                    <a href="#fridge-1" class="btn btn-soft">جزئیات</a>
+                                    <button class="btn btn-primary" type="button">افزودن به سبد</button>
+                                </div>
+                            </div>
+                        </article>
+                        <article class="product-card">
+                            <img src="./assets/images/dd7197c77621521206b911e2739c49df437c9830_1603176952.jpg" alt="یخچال 30 فوت" class="product-card__cover" />
+                            <div class="product-card__body">
+                                <p class="badge">یخچال و فریزر</p>
+                                <h3>یخچال و فریزر 30 فوت التتو مدل RF-840NE2-IC</h3>
+                                <p class="product-card__meta">شناسه محصول: نامعلوم</p>
+                                <div class="product-card__actions">
+                                    <a href="#fridge-2" class="btn btn-soft">جزئیات</a>
+                                    <button class="btn btn-primary" type="button">افزودن به سبد</button>
+                                </div>
+                            </div>
+                        </article>
+                        <article class="product-card">
+                            <img src="./assets/images/4740b694c13f350604a0382c9c9ffd15bd2a98cb_1603179813.jpg" alt="یخچال 22 فوت" class="product-card__cover" />
+                            <div class="product-card__body">
+                                <p class="badge">یخچال و فریزر</p>
+                                <h3>یخچال و فریزر 22 فوت التتو مدل NC702DN</h3>
+                                <p class="product-card__meta">شناسه محصول: نامعلوم</p>
+                                <div class="product-card__actions">
+                                    <a href="#fridge-3" class="btn btn-soft">جزئیات</a>
+                                    <button class="btn btn-primary" type="button">افزودن به سبد</button>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <!-- Promotions -->
+                <section id="promotions" class="grid gap-6 lg:grid-cols-2">
+                    <article class="promo-card bg-green-200/70 border border-green-300">
+                        <div class="promo-card__media">
+                            <img
+                                src="./assets/images/bhg-product-mr-coffee-5-cup-mini-brew-switch-coffee-maker-14-rkilgore-1410-1-7365d15ab5594daeb983c081502ba0c4.jpeg"
+                                alt="دستگاه قهوه ساز"
+                            />
+                        </div>
+                        <div class="promo-card__body">
+                            <p class="promo-kicker">نوشیدنی سازها</p>
+                            <h3>همه مدل قهوه‌ساز و نوشیدنی ساز</h3>
+                            <p>از دستگاه‌های رو‌میزی تا حرفه‌ای، مطابق نیاز کافی‌شاپ خانگی شما.</p>
+                            <a href="#coffee" class="btn btn-outline mt-4">
+                                خرید
+                                <i class="fa-solid fa-cart-shopping text-sm"></i>
+                            </a>
+                        </div>
+                    </article>
+                    <article class="promo-card bg-blue-200/70 border border-blue-300">
+                        <div class="promo-card__media">
+                            <img src="./assets/images/1547631410-1.png" alt="انواع لوازم خانه" />
+                        </div>
+                        <div class="promo-card__body">
+                            <p class="promo-kicker">خانه رویایی</p>
+                            <h3>همه جور لوازم خانه</h3>
+                            <p>از نورپردازی تا دکوراتیو؛ هر آنچه فضای خانه را خاص می‌کند.</p>
+                            <a href="#home" class="btn btn-outline mt-4">
+                                خرید
+                                <i class="fa-solid fa-cart-shopping text-sm"></i>
+                            </a>
+                        </div>
+                    </article>
+                </section>
+            </div>
+
+            <footer class="bg-white border-t border-slate-200">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-12 space-y-10">
+                    <div class="flex flex-wrap items-center justify-between gap-6">
+                        <div class="flex items-center gap-4">
+                            <img class="w-16" src="./assets/images/logos.png" alt="لوگو" />
+                            <div>
+                                <p class="font-semibold text-lg">مهر سپهر</p>
+                                <p class="text-sm text-slate-500">از دهه ۱۳۴۰ کنار خانواده‌های ایرانی</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" type="button" data-scroll-top>
+                            رفتن به بالای صفحه
+                            <i class="fa-solid fa-arrow-up-from-bracket text-sm"></i>
+                        </button>
+                    </div>
+                    <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+                        <section>
+                            <h4 class="footer-heading">دسته‌بندی‌ها</h4>
+                            <ul class="footer-list">
+                                <li><a href="#hero">خانه</a></li>
+                                <li><a href="#cookware">لوازم آشپزخانه</a></li>
+                                <li><a href="#appliances">لوازم خانگی برقی</a></li>
+                            </ul>
+                        </section>
+                        <section>
+                            <h4 class="footer-heading">برندها</h4>
+                            <ul class="footer-list" id="brands">
+                                <li><a href="#brands">پاکشوما</a></li>
+                                <li><a href="#brands">سونی</a></li>
+                                <li><a href="#brands">سامسونگ</a></li>
+                                <li><a href="#brands">ال‌جی</a></li>
+                            </ul>
+                        </section>
+                        <section>
+                            <h4 class="footer-heading">خدمات مشتریان</h4>
+                            <ul class="footer-list" id="about">
+                                <li><a href="#contact">تماس با ما</a></li>
+                                <li><a href="#contact">پشتیبانی ۲۴/۷</a></li>
+                                <li><a href="#promotions">پیشنهاد ویژه</a></li>
+                                <li><a href="#cook-cta">مجله آشپزی</a></li>
+                            </ul>
+                        </section>
+                        <section id="contact" class="space-y-3">
+                            <h4 class="footer-heading">ارتباط با مهر سپهر</h4>
+                            <p>تلفن: 021-28423963</p>
+                            <p>ایمیل: gablame.com@gmail.com</p>
+                            <div class="flex gap-3">
+                                <a href="https://instagram.com" target="_blank" rel="noreferrer" class="footer-social">
+                                    <img src="./assets/images/social-instagram.jpg" alt="اینستاگرام مهر سپهر" />
+                                </a>
+                                <a href="https://wa.me" target="_blank" rel="noreferrer" class="footer-social">
+                                    <img src="./assets/images/WhatsApp.svg.webp" alt="واتساپ مهر سپهر" />
+                                </a>
+                                <a href="https://t.me" target="_blank" rel="noreferrer" class="footer-social">
+                                    <img src="./assets/images/Telegram_logo.svg.webp" alt="تلگرام مهر سپهر" />
+                                </a>
+                            </div>
+                        </section>
+                    </div>
+                    <div class="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-6">
+                        <p class="text-sm text-slate-500 max-w-2xl">
+                            از دهه ۱۳۴۰ خورشیدی با فعالیت حاج آقا محمود ستاری، این فعالیت صنفی آغاز شد و امروز در قالب شرکت مهرسپهر آریاقشم با
+                            تمرکز بر تجربه خرید امن و پاسخگو ادامه دارد.
+                        </p>
+                        <div class="flex items-center gap-3">
+                            <a href="https://enamad.ir" target="_blank" rel="noreferrer" class="compliance-badge">
+                                <img src="./assets/images/enemad.png" alt="نماد اعتماد الکترونیک" />
+                            </a>
+                            <a href="https://samandehi.ir" target="_blank" rel="noreferrer" class="compliance-badge">
+                                <img src="./assets/images/samandehi.png" alt="نشان ساماندهی" />
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </main>
+    </div>
+    <script src="https://kit.fontawesome.com/ab1d0620d7.js" crossorigin="anonymous"></script>
+    <script src="./scripts/main.js"></script>
+</body>
+</html>
+
