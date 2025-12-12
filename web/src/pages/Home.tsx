@@ -1,6 +1,6 @@
-import { For, Show, createMemo, createResource } from "solid-js";
-import { productsApi } from "../utils/api";
-import { Product, normalizeProduct } from "../types/api";
+import { For, Show, createMemo, createResource, createSignal } from "solid-js";
+import { productsApi, categoriesApi } from "../utils/api";
+import { Product, normalizeProduct, Category, normalizeCategory } from "../types/api";
 
 const heroCards = [
   {
@@ -70,23 +70,117 @@ const skeletonCard = (
   </article>
 );
 
-const productImage = (index: number) =>
-  fallbackImages[index % fallbackImages.length];
+const productImage = (product: Product, indexFallback: number) => {
+  const primary = product.images?.find((i) => i.isPrimary) || product.images?.[0];
+  const url = primary?.url;
+  if (url) return url.startsWith("http") ? url : `http://localhost:8080${url}`;
+  return fallbackImages[indexFallback % fallbackImages.length];
+};
 const formatPrice = (value?: number) =>
   `${Intl.NumberFormat("fa-IR").format(value ?? 0)} تومان`;
 
 const Home = () => {
-  const [products] = createResource<Product[]>(async () => {
-    const response = await productsApi.getAll();
+  const [searchTerm, setSearchTerm] = createSignal("");
+  const [categoryFilter, setCategoryFilter] = createSignal("all");
+
+  const [products] = createResource<Product[], { category: string; q: string }>(
+    () => ({ category: categoryFilter(), q: searchTerm().trim() }),
+    async (filters) => {
+      const response = await productsApi.getAll({
+        categoryId: filters.category === "all" ? undefined : filters.category,
+        q: filters.q || undefined,
+      });
+      const payload = Array.isArray(response.data) ? response.data : [];
+      return payload.map(normalizeProduct);
+    }
+  );
+
+  const [categories] = createResource<Category[]>(async () => {
+    const response = await categoriesApi.getAll();
     const payload = Array.isArray(response.data) ? response.data : [];
-    return payload.map(normalizeProduct);
+    return payload.map(normalizeCategory);
   });
+
+  const filteredProducts = createMemo(() => products() ?? []);
 
   const cookwareProducts = createMemo(() => (products() ?? []).slice(0, 3));
   const applianceProducts = createMemo(() => (products() ?? []).slice(3, 6));
+  const featuredProducts = createMemo(() => filteredProducts().slice(0, 6));
 
   return (
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-10 space-y-16 lg:space-y-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-10 space-y-16 lg:space-y-20" dir="rtl">
+      {/* Search + Categories */}
+      <section class="rounded-3xl bg-gradient-to-br from-slate-50 via-white to-indigo-50 border border-slate-200 shadow-sm p-6 md:p-8 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p class="section-kicker">جستجو و دسته‌بندی</p>
+            <h1 class="text-2xl md:text-3xl font-semibold text-slate-900">هرچه می‌خواهید، سریع پیدا کنید</h1>
+            <p class="text-slate-500 mt-1">نام محصول، برند یا کد کالا را جستجو کنید و با فیلتر دسته‌بندی، نتایج را دقیق‌تر ببینید.</p>
+          </div>
+          <a href="/products" class="btn btn-primary whitespace-nowrap">مشاهده همه محصولات</a>
+        </div>
+        <div class="flex flex-col lg:flex-row gap-3">
+          <label class="flex-1 flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+            <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
+            <input
+              type="search"
+              placeholder="جستجو بر اساس نام محصول، برند یا کد"
+              class="w-full border-none bg-transparent text-sm focus:outline-none"
+              value={searchTerm()}
+              onInput={(e) => setSearchTerm(e.currentTarget.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  setSearchTerm(e.currentTarget.value);
+                }
+              }}
+            />
+          </label>
+          <select
+            class="w-full lg:w-64 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none"
+            value={categoryFilter()}
+            onInput={(e) => setCategoryFilter(e.currentTarget.value)}
+          >
+            <option value="all">همه دسته‌ها</option>
+            <Show when={categories()}>
+              <For each={categories()}>
+                {(cat) => <option value={cat.id.toString()}>{cat.name}</option>}
+              </For>
+            </Show>
+          </select>
+        </div>
+
+        {/* Category chips */}
+        <Show when={categories()}>
+          <div class="flex flex-wrap gap-2 pt-2">
+            <button
+              class={`px-3 py-1 rounded-full border text-sm ${
+                categoryFilter() === "all"
+                  ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+                  : "border-slate-200 hover:border-indigo-200 hover:bg-indigo-50"
+              }`}
+              onClick={() => setCategoryFilter("all")}
+            >
+              همه
+            </button>
+            <For each={categories()}>
+              {(cat) => (
+                <button
+                  class={`px-3 py-1 rounded-full border text-sm ${
+                    categoryFilter() === String(cat.id)
+                      ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+                      : "border-slate-200 hover:border-indigo-200 hover:bg-indigo-50"
+                  }`}
+                  onClick={() => setCategoryFilter(String(cat.id))}
+                >
+                  {cat.name}
+                </button>
+              )}
+            </For>
+          </div>
+        </Show>
+      </section>
+
       <section id="hero" class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         <For each={heroCards}>
           {(card, index) => (
@@ -157,7 +251,7 @@ const Home = () => {
               {(product, index) => (
                 <article class="product-card">
                   <img
-                    src={productImage(index())}
+                    src={productImage(product, index())}
                     alt={product.name}
                     class="product-card__cover"
                     loading="lazy"
@@ -242,7 +336,7 @@ const Home = () => {
               {(product, index) => (
                 <article class="product-card">
                   <img
-                    src={productImage(index() + 3)}
+                    src={productImage(product, index() + 3)}
                     alt={product.name}
                     class="product-card__cover"
                     loading="lazy"
@@ -295,6 +389,73 @@ const Home = () => {
             </article>
           )}
         </For>
+      </section>
+
+      {/* Featured products based on filters */}
+      <section class="space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p class="section-kicker">نتایج متناسب با جستجو</p>
+            <h2>پیشنهادهای هوشمند برای شما</h2>
+          </div>
+          <a
+            href="/products"
+            class="text-blue-600 font-semibold hover:underline"
+          >
+            مشاهده همه
+          </a>
+        </div>
+
+        <div class="product-grid">
+          <Show
+            when={!products.loading}
+            fallback={[skeletonCard, skeletonCard, skeletonCard]}
+          >
+            <Show
+              when={featuredProducts().length > 0}
+              fallback={
+                <div class="rounded-2xl border border-dashed border-slate-300 px-6 py-12 text-center text-slate-500">
+                  نتیجه‌ای با فیلترهای فعلی پیدا نشد.
+                </div>
+              }
+            >
+              <For each={featuredProducts()}>
+                {(product, index) => (
+                  <article class="product-card">
+                    <img
+                      src={productImage(product, index())}
+                      alt={product.name}
+                      class="product-card__cover"
+                      loading="lazy"
+                    />
+                    <div class="product-card__body">
+                      <p class="badge">
+                        {product.category?.name ?? "دسته‌بندی نشده"}
+                      </p>
+                      <h3>{product.name}</h3>
+                      <p class="product-card__meta">
+                        {product.description ||
+                          "توضیحات محصول به زودی اضافه می‌شود."}
+                      </p>
+                      <div class="flex items-center justify-between text-sm text-slate-500">
+                        <span>کد: {product.sku}</span>
+                        <span>موجودی: {product.stock}</span>
+                      </div>
+                      <div class="product-card__actions">
+                        <a href={`/products/${product.id}`} class="btn btn-soft">
+                          جزئیات
+                        </a>
+                        <button class="btn btn-primary" type="button">
+                          {formatPrice(product.price)}
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                )}
+              </For>
+            </Show>
+          </Show>
+        </div>
       </section>
     </div>
   );

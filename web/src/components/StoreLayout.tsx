@@ -1,4 +1,4 @@
-import { A } from "@solidjs/router";
+import { A, useNavigate } from "@solidjs/router";
 import {
   Component,
   For,
@@ -16,7 +16,7 @@ interface StoreLayoutProps extends ParentProps {
 }
 
 const sidebarLinks = [
-  { href: "#hero", label: "خانه", icon: "fa-solid fa-house" },
+  { href: "/", label: "خانه", icon: "fa-solid fa-house" },
   {
     href: "#cookware",
     label: "سرویس پخت و پز",
@@ -50,7 +50,6 @@ const sidebarSocial = [
 ];
 
 const categoryLinks = [
-  { href: "#hero", label: "خانه" },
   { href: "#cookware", label: "پخت و پز" },
   { href: "#kitchen-cta", label: "آشپزخانه" },
   { href: "#appliances", label: "یخچال و فریزر" },
@@ -113,6 +112,8 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
   const auth = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = createSignal(false);
   const [isDesktop, setIsDesktop] = createSignal(false);
+  const [search, setSearch] = createSignal("");
+  const navigate = useNavigate();
 
   const closeSidebar = () => setIsSidebarOpen(false);
   const toggleSidebar = () => {
@@ -125,6 +126,15 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
   const headerUserName = () => auth.user()?.username || auth.user()?.email;
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+
+  const handleSearch = () => {
+    const q = search().trim();
+    if (q) {
+      navigate(`/products?search=${encodeURIComponent(q)}`);
+    } else {
+      navigate(`/products`);
+    }
+  };
 
   onMount(() => {
     document.documentElement.lang = "fa";
@@ -196,6 +206,12 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
             <p class="text-xs uppercase tracking-widest text-slate-400 mb-2">
               ناحیه کاربری
             </p>
+            <Show when={auth.isAdmin()}>
+              <A href="/admin" class="sidebar-link" onClick={closeSidebar}>
+                <i class="fa-solid fa-user-shield"></i>
+                پنل مدیریت
+              </A>
+            </Show>
             <For each={accountLinks}>
               {(item) => (
                 <A href={item.href} class="sidebar-link" onClick={closeSidebar}>
@@ -249,7 +265,7 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
         ></div>
 
         <main id="mainContent" class="content-area flex-1 min-h-screen">
-          <header class="page-header border-b border-slate-200 bg-white/80 backdrop-blur">
+          <header class="page-header sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur shadow-sm">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
               <div class="flex flex-wrap items-center justify-between gap-4 py-6">
                 <div class="flex items-center gap-3">
@@ -283,10 +299,25 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
                   <input
                     id="headerSearch"
                     type="search"
+                    value={search()}
+                    onInput={(e) => setSearch(e.currentTarget.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSearch();
+                      }
+                    }}
                     placeholder="جستجو محصولات، برند یا دسته‌بندی"
-                    class="w-full rounded-2xl border border-slate-200 bg-slate-100 py-3 pr-12 pl-4 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                    class="w-full rounded-2xl border border-slate-200 bg-slate-100 py-3 pl-12 pr-4 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
                   />
-                  <i class="fa-solid fa-magnifying-glass absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                  <button
+                    type="button"
+                    aria-label="جستجو"
+                    class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                    onClick={handleSearch}
+                  >
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                  </button>
                 </label>
                 <div class="flex items-center gap-3">
                   <Show
@@ -294,15 +325,8 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
                     fallback={
                       <>
                         <A href="/login" class="btn btn-outline">
-                          ورود | ثبت‌نام
+                          ورود
                           <i class="fa-solid fa-right-to-bracket text-sm"></i>
-                        </A>
-                        <A
-                          href="/register"
-                          class="btn btn-icon"
-                          aria-label="ثبت‌نام"
-                        >
-                          <i class="fa-solid fa-user-plus"></i>
                         </A>
                       </>
                     }
@@ -328,7 +352,7 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
                   </Show>
                 </div>
               </div>
-              <Show when={props.showCategoryNav !== false}>
+              {/* <Show when={props.showCategoryNav !== false}>
                 <nav class="category-nav" aria-label="دسته‌بندی اصلی">
                   <div class="category-track">
                     <For each={categoryLinks}>
@@ -345,7 +369,7 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
                     </For>
                   </div>
                 </nav>
-              </Show>
+              </Show> */}
             </div>
           </header>
 

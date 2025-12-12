@@ -11,23 +11,25 @@ export default function Navbar() {
           <img src={LogoPng} alt="Logo" class="h-8" />
         </a>
       </div>
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-4" dir="rtl">
         {auth.isAuthenticated() ? (
           <>
-            <span class="text-gray-700">Welcome, {auth.user()?.username}</span>
+            <span class="text-gray-700">
+              خوش آمدید، {auth.user()?.username}
+            </span>
             {auth.isAdmin() && (
               <a
                 href="/admin"
                 class="text-indigo-600 hover:text-indigo-800 font-semibold"
               >
-                Admin
+                مدیریت
               </a>
             )}
             <button
               onClick={() => auth.logout()}
               class="text-red-500 hover:text-red-700 font-semibold"
             >
-              Logout
+              خروج
             </button>
           </>
         ) : (
@@ -36,13 +38,13 @@ export default function Navbar() {
               href="/login"
               class="text-blue-500 hover:text-blue-700 font-semibold"
             >
-              Login
+              ورود
             </a>
             <a
               href="/register"
               class="text-green-500 hover:text-green-700 font-semibold"
             >
-              Register
+              ثبت‌نام
             </a>
           </>
         )}

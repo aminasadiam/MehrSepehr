@@ -1,19 +1,41 @@
 package middleware
 
-import "net/http"
+import (
+	"net/http"
+	"strings"
 
-func CORS(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
+	"github.com/aminasadiam/Kasra/config"
+)
 
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
+func CORS(cfg *config.Configuration) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			origin := r.Header.Get("Origin")
+			allowedOrigins := strings.Split(cfg.AllowedOrigins, ",")
+			
+			// Check if origin is allowed
+			allowed := false
+			for _, allowedOrigin := range allowedOrigins {
+				if strings.TrimSpace(allowedOrigin) == origin {
+					allowed = true
+					break
+				}
+			}
+			
+			if allowed {
+				w.Header().Set("Access-Control-Allow-Origin", origin)
+			}
+			
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
 
-		next.ServeHTTP(w, r)
-	})
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
 }

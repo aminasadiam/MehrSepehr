@@ -12,16 +12,16 @@ import (
 )
 
 type AuthHandler struct {
-	userRepo *repository.UserRepository
+	userRepo   *repository.UserRepository
 	walletRepo *repository.WalletRepository
-	cfg      *config.Configuration
+	cfg        *config.Configuration
 }
 
 func NewAuthHandler(db *gorm.DB, cfg *config.Configuration) *AuthHandler {
 	return &AuthHandler{
-		userRepo: repository.NewUserRepository(db),
+		userRepo:   repository.NewUserRepository(db),
 		walletRepo: repository.NewWalletRepository(db),
-		cfg:      cfg,
+		cfg:        cfg,
 	}
 }
 
@@ -29,6 +29,8 @@ type RegisterRequest struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	Phone    string `json:"phone,omitempty"`
+	Avatar   string `json:"avatar,omitempty"`
 }
 
 type LoginRequest struct {
@@ -73,6 +75,8 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		Username: req.Username,
 		Email:    req.Email,
 		Password: hashedPassword,
+		Phone:    req.Phone,
+		Avatar:   req.Avatar,
 	}
 
 	if err := h.userRepo.Create(user); err != nil {
@@ -104,6 +108,8 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 			"id":       user.ID,
 			"username": user.Username,
 			"email":    user.Email,
+			"phone":    user.Phone,
+			"avatar":   user.Avatar,
 		},
 	}, http.StatusCreated)
 }
@@ -146,6 +152,8 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 			"id":       user.ID,
 			"username": user.Username,
 			"email":    user.Email,
+			"phone":    user.Phone,
+			"avatar":   user.Avatar,
 		},
 	}, http.StatusOK)
 }
@@ -165,4 +173,3 @@ func (h *AuthHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 
 	utils.JSONResponse(w, user, http.StatusOK)
 }
-

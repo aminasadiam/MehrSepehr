@@ -17,12 +17,15 @@ import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminRoute from "./components/AdminRoute";
 import Users from "./pages/admin/Users";
+import Groups from "./pages/admin/Groups";
 import Roles from "./pages/admin/Roles";
 import Permissions from "./pages/admin/Permissions";
 import AdminProducts from "./pages/admin/Products";
 import Categories from "./pages/admin/Categories";
 import AdminOrders from "./pages/admin/Orders";
 import Wallets from "./pages/admin/Wallets";
+import UserDetail from "./pages/admin/UserDetail";
+import Brands from "./pages/admin/Brands";
 import type { Component as SolidComponent } from "solid-js";
 
 const root = document.getElementById("root");
@@ -96,10 +99,26 @@ render(
         )}
       />
       <Route
+        path="/admin/groups"
+        component={() => (
+          <AdminRoute>
+            <Groups />
+          </AdminRoute>
+        )}
+      />
+      <Route
         path="/admin/categories"
         component={() => (
           <AdminRoute>
             <Categories />
+          </AdminRoute>
+        )}
+      />
+      <Route
+        path="/admin/brands"
+        component={() => (
+          <AdminRoute>
+            <Brands />
           </AdminRoute>
         )}
       />
@@ -116,6 +135,14 @@ render(
         component={() => (
           <AdminRoute>
             <Wallets />
+          </AdminRoute>
+        )}
+      />
+      <Route
+        path="/admin/users/:id"
+        component={() => (
+          <AdminRoute>
+            <UserDetail />
           </AdminRoute>
         )}
       />

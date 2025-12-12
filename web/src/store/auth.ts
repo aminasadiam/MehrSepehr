@@ -5,6 +5,8 @@ export interface User {
   id: number;
   username: string;
   email: string;
+  phone?: string;
+  avatar?: string;
 }
 
 export type Role = { id?: number; name: string };
@@ -31,6 +33,8 @@ async function refreshProfile() {
         id: data.id ?? data.ID,
         username: data.username ?? data.Username,
         email: data.email ?? data.Email,
+        phone: data.phone ?? data.Phone,
+        avatar: data.avatar ?? data.Avatar,
       });
       // capture roles if present
       if (data.roles) {
@@ -65,7 +69,13 @@ export const useAuth = () => {
         const token = (response.data as any).token;
         localStorage.setItem("token", token);
         const u = (response.data as any).user;
-        setUser(u);
+        setUser({
+          id: u.id ?? u.ID,
+          username: u.username ?? u.Username,
+          email: u.email ?? u.Email,
+          phone: u.phone ?? u.Phone,
+          avatar: u.avatar ?? u.Avatar,
+        });
         if (u && u.roles) {
           setRoles(
             (u.roles as any).map((r: any) => ({
@@ -96,7 +106,13 @@ export const useAuth = () => {
         const token = (response.data as any).token;
         localStorage.setItem("token", token);
         const u = (response.data as any).user;
-        setUser(u);
+        setUser({
+          id: u.id ?? u.ID,
+          username: u.username ?? u.Username,
+          email: u.email ?? u.Email,
+          phone: u.phone ?? u.Phone,
+          avatar: u.avatar ?? u.Avatar,
+        });
         if (u && u.roles) {
           setRoles(
             (u.roles as any).map((r: any) => ({

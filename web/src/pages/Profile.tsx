@@ -5,11 +5,14 @@ import { useAuth } from "../store/auth";
 const Profile = () => {
   const auth = useAuth();
   const [form, setForm] = createSignal({ username: "", email: "" });
+  const [isSavingPassword, setIsSavingPassword] = createSignal(false);
   const [message, setMessage] = createSignal<{
     type: "success" | "error";
     text: string;
   } | null>(null);
   const [isSaving, setIsSaving] = createSignal(false);
+  const [uploading, setUploading] = createSignal(false);
+  const [preview, setPreview] = createSignal<string | null>(null);
 
   createEffect(() => {
     const current = auth.user();
@@ -17,9 +20,40 @@ const Profile = () => {
       setForm({
         username: current.username,
         email: current.email,
+        phone: current.phone ?? "",
+        avatar: current.avatar ?? "",
       });
+      setPreview(current.avatar ?? null);
     }
   });
+
+  const handleAvatarChange = async (e: Event) => {
+    const input = e.currentTarget as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    const current = auth.user();
+    if (!current) return;
+
+    // show local preview
+    setPreview(URL.createObjectURL(file));
+
+    const form = new FormData();
+    form.append("avatar", file);
+    try {
+      setUploading(true);
+      await usersApi.uploadAvatar(current.id, form);
+      await auth.refreshProfile();
+      setMessage({ type: "success", text: "تصویر پروفایل بارگذاری شد." });
+    } catch (err: any) {
+      console.error(err);
+      setMessage({
+        type: "error",
+        text: err?.message || "بارگذاری با خطا مواجه شد.",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (event: Event) => {
     event.preventDefault();
@@ -29,10 +63,15 @@ const Profile = () => {
     try {
       setIsSaving(true);
       setMessage(null);
-      await usersApi.update(current.id, {
+      const payload: any = {
         username: form().username,
         email: form().email,
-      });
+      };
+      if (form().phone !== undefined) payload.phone = form().phone;
+      if (form().avatar !== undefined) payload.avatar = form().avatar;
+      if ((form() as any).password) payload.password = (form() as any).password;
+
+      await usersApi.update(current.id, payload);
       setMessage({ type: "success", text: "اطلاعات حساب کاربری ذخیره شد." });
       await auth.refreshProfile();
     } catch (error: any) {
@@ -108,6 +147,73 @@ const Profile = () => {
               }
               class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               required
+            />
+          </div>
+
+          <div>
+            <label
+              class="block text-sm font-semibold text-slate-600"
+              for="phone"
+            >
+              شماره تلفن
+            </label>
+            <input
+              id="phone"
+              type="text"
+              value={form().phone}
+              onInput={(event) =>
+                setForm({ ...form(), phone: event.currentTarget.value })
+              }
+              class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+
+          <div>
+            <label
+              class="block text-sm font-semibold text-slate-600"
+              for="avatar"
+            >
+              تصویر پروفایل
+            </label>
+            <div class="flex items-center gap-3">
+              <div class="w-20 h-20 rounded-full overflow-hidden bg-slate-100">
+                <Show when={preview()}>
+                  <img
+                    src={preview()!}
+                    alt="avatar"
+                    class="w-full h-full object-cover"
+                  />
+                </Show>
+              </div>
+              <div class="flex-1">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                />
+                <div class="text-xs text-slate-500 mt-1">
+                  {uploading()
+                    ? "در حال آپلود..."
+                    : "آپلود یک تصویر برای پروفایل"}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label
+              class="block text-sm font-semibold text-slate-600"
+              for="password"
+            >
+              رمز جدید (خالی بگذارید اگر نمی‌خواهید تغییر دهید)
+            </label>
+            <input
+              id="password"
+              type="password"
+              onInput={(event) =>
+                setForm({ ...form(), password: event.currentTarget.value })
+              }
+              class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
 

@@ -83,14 +83,45 @@ class ApiClient {
   async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { method: "DELETE" });
   }
+
+  // upload using FormData (multipart). Will not set Content-Type to allow browser to add proper boundary.
+  async upload<T>(endpoint: string, form: FormData): Promise<ApiResponse<T>> {
+    const token = localStorage.getItem("token");
+    const headers = new Headers();
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+
+    try {
+      const response = await fetch(`${this.baseURL}${endpoint}`, {
+        method: "POST",
+        body: form,
+        headers,
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new ApiError(
+          data.error || response.statusText || "Request failed",
+          response.status
+        );
+      }
+      return data;
+    } catch (error: any) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(error?.message || "Network error", 0);
+    }
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);
 
 // Auth API
 export const authApi = {
-  register: (username: string, email: string, password: string) =>
-    api.post("/auth/register", { username, email, password }),
+  register: (
+    username: string,
+    email: string,
+    password: string,
+    phone?: string,
+    avatar?: string
+  ) => api.post("/auth/register", { username, email, password, phone, avatar }),
 
   login: (email: string, password: string) =>
     api.post("/auth/login", { email, password }),
@@ -100,10 +131,13 @@ export const authApi = {
 
 // Products API
 export const productsApi = {
-  getAll: (categoryId?: number | string) => {
-    const url = categoryId
-      ? `/products?category_id=${categoryId}`
-      : "/products";
+  getAll: (params?: { categoryId?: number | string; q?: string; brandId?: number | string }) => {
+    const search = new URLSearchParams();
+    if (params?.categoryId) search.append("category_id", String(params.categoryId));
+    if (params?.brandId) search.append("brand_id", String(params.brandId));
+    if (params?.q) search.append("q", params.q);
+    const query = search.toString();
+    const url = query ? `/products?${query}` : "/products";
     return api.get(url);
   },
   getById: (id: number | string) => api.get(`/products/${id}`),
@@ -111,6 +145,8 @@ export const productsApi = {
   update: (id: number | string, product: any) =>
     api.put(`/products/${id}`, product),
   delete: (id: number | string) => api.delete(`/products/${id}`),
+  uploadImage: (id: number | string, form: FormData) =>
+    api.upload(`/products/${id}/images`, form),
 };
 
 // Categories API
@@ -124,6 +160,16 @@ export const categoriesApi = {
   delete: (id: number | string) => api.delete(`/categories/${id}`),
 };
 
+// Brands API
+export const brandsApi = {
+  getAll: () => api.get("/brands"),
+  getById: (id: number | string) => api.get(`/brands/${id}`),
+  create: (brand: any) => api.post("/admin/brands", brand),
+  update: (id: number | string, brand: any) =>
+    api.put(`/admin/brands/${id}`, brand),
+  delete: (id: number | string) => api.delete(`/admin/brands/${id}`),
+};
+
 // Users API
 export const usersApi = {
   getAll: () => api.get("/users"),
@@ -131,6 +177,8 @@ export const usersApi = {
   update: (id: number | string, payload: any) =>
     api.put(`/users/${id}`, payload),
   delete: (id: number | string) => api.delete(`/users/${id}`),
+  uploadAvatar: (id: number | string, form: FormData) =>
+    api.upload(`/users/${id}/avatar`, form),
   // admin role management
   addRole: (id: number | string, roleId: number) =>
     api.post(`/admin/users/${id}/roles`, { role_id: roleId }),
@@ -185,4 +233,26 @@ export const adminApi = {
     api.put(`/admin/permissions/${id}`, payload),
   deletePermission: (id: number | string) =>
     api.delete(`/admin/permissions/${id}`),
+  // groups
+  getGroups: () => api.get(`/admin/groups`),
+  createGroup: (payload: any) => api.post(`/admin/groups`, payload),
+  getGroup: (id: number | string) => api.get(`/admin/groups/${id}`),
+  deleteGroup: (id: number | string) => api.delete(`/admin/groups/${id}`),
+  addProductToGroup: (id: number | string, productId: number) =>
+    api.post(`/admin/groups/${id}/products`, { product_id: productId }),
+  removeProductFromGroup: (id: number | string, prodId: number) =>
+    api.delete(`/admin/groups/${id}/products/${prodId}`),
+  addUserToGroup: (id: number | string, userId: number) =>
+    api.post(`/admin/groups/${id}/users`, { user_id: userId }),
+  removeUserFromGroup: (id: number | string, userId: number) =>
+    api.delete(`/admin/groups/${id}/users/${userId}`),
+  uploadUserAvatar: (id: number | string, form: FormData) =>
+    api.upload(`/admin/users/${id}/avatar`, form),
+  // brands
+  getBrands: () => api.get(`/admin/brands`),
+  createBrand: (payload: any) => api.post(`/admin/brands`, payload),
+  getBrand: (id: number | string) => api.get(`/admin/brands/${id}`),
+  updateBrand: (id: number | string, payload: any) =>
+    api.put(`/admin/brands/${id}`, payload),
+  deleteBrand: (id: number | string) => api.delete(`/admin/brands/${id}`),
 };

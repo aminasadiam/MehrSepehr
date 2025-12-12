@@ -15,7 +15,7 @@ import (
 func main() {
 	username := flag.String("username", "admin", "admin username")
 	email := flag.String("email", "admin@example.com", "admin email")
-	password := flag.String("password", "change-me", "admin password")
+	password := flag.String("password", "admin", "admin password")
 	flag.Parse()
 
 	cfg := config.Load()

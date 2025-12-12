@@ -1,6 +1,7 @@
 import { useNavigate } from "@solidjs/router";
 import { ParentComponent, Show, createEffect } from "solid-js";
 import { useAuth } from "../store/auth";
+import AdminLayout from "./AdminLayout";
 
 const AdminRoute: ParentComponent = (props) => {
   const auth = useAuth();
@@ -29,7 +30,7 @@ const AdminRoute: ParentComponent = (props) => {
         </div>
       }
     >
-      {props.children}
+      <AdminLayout>{props.children}</AdminLayout>
     </Show>
   );
 };
