@@ -25,7 +25,9 @@ func (r *ProductRepository) GetByID(id uint) (*models.Product, error) {
 
 func (r *ProductRepository) GetAll() ([]models.Product, error) {
 	var products []models.Product
-	err := r.db.Preload("Category").Preload("Brand").Preload("Images").Preload("Sizes").Preload("Colors").Preload("Groups").Find(&products).Error
+	err := r.db.Preload("Category").Preload("Brand").Preload("Images").Preload("Sizes").Preload("Colors").Preload("Groups").
+		Order("created_at DESC").
+		Find(&products).Error
 	return products, err
 }
 
@@ -39,7 +41,10 @@ func (r *ProductRepository) Delete(id uint) error {
 
 func (r *ProductRepository) GetByCategory(categoryID uint) ([]models.Product, error) {
 	var products []models.Product
-	err := r.db.Where("category_id = ?", categoryID).Preload("Category").Preload("Brand").Preload("Images").Preload("Sizes").Preload("Colors").Find(&products).Error
+	err := r.db.Where("category_id = ?", categoryID).
+		Preload("Category").Preload("Brand").Preload("Images").Preload("Sizes").Preload("Colors").
+		Order("created_at DESC").
+		Find(&products).Error
 	return products, err
 }
 
@@ -74,6 +79,7 @@ func (r *ProductRepository) Search(q string, categoryID *uint, brandID *uint) ([
 		Preload("Sizes").
 		Preload("Colors").
 		Preload("Groups").
+		Order("created_at DESC").
 		Find(&products).Error
 
 	return products, err
