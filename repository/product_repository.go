@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"strings"
+
 	"github.com/aminasadiam/Kasra/models"
 	"gorm.io/gorm"
 )
@@ -17,18 +19,29 @@ func (r *ProductRepository) Create(model *models.Product) error {
 	return r.db.Create(model).Error
 }
 
-func (r *ProductRepository) GetByID(id uint) (*models.Product, error) {
-	var product models.Product
-	err := r.db.Preload("Category").Preload("Brand").Preload("Images").Preload("Sizes").Preload("Colors").Preload("Groups").First(&product, id).Error
-	return &product, err
+// GetByID با Preload کامل روابط (شامل Prices جدید)
+func (r *ProductRepository) GetByID(id uint, product *models.Product) error {
+	return r.db.Preload("Category").
+		Preload("Brand").
+		Preload("Images").
+		Preload("Sizes").
+		Preload("Colors").
+		Preload("Groups").
+		Preload("Prices").
+		First(product, id).Error
 }
 
-func (r *ProductRepository) GetAll() ([]models.Product, error) {
-	var products []models.Product
-	err := r.db.Preload("Category").Preload("Brand").Preload("Images").Preload("Sizes").Preload("Colors").Preload("Groups").
+// GetAll با Preload کامل
+func (r *ProductRepository) GetAll(products *[]models.Product) error {
+	return r.db.Preload("Category").
+		Preload("Brand").
+		Preload("Images").
+		Preload("Sizes").
+		Preload("Colors").
+		Preload("Groups").
+		Preload("Prices").
 		Order("created_at DESC").
-		Find(&products).Error
-	return products, err
+		Find(products).Error
 }
 
 func (r *ProductRepository) Update(model *models.Product) error {
@@ -42,20 +55,26 @@ func (r *ProductRepository) Delete(id uint) error {
 func (r *ProductRepository) GetByCategory(categoryID uint) ([]models.Product, error) {
 	var products []models.Product
 	err := r.db.Where("category_id = ?", categoryID).
-		Preload("Category").Preload("Brand").Preload("Images").Preload("Sizes").Preload("Colors").
+		Preload("Category").
+		Preload("Brand").
+		Preload("Images").
+		Preload("Sizes").
+		Preload("Colors").
+		Preload("Groups").
+		Preload("Prices").
 		Order("created_at DESC").
 		Find(&products).Error
 	return products, err
 }
 
-// Search products by free text (name, description, sku, brand) with optional category and brand filters.
+// Search با Preload کامل (شامل Prices)
 func (r *ProductRepository) Search(q string, categoryID *uint, brandID *uint) ([]models.Product, error) {
 	var products []models.Product
 	db := r.db.Model(&models.Product{}).
 		Joins("LEFT JOIN brands ON brands.id = products.brand_id")
 
 	if q != "" {
-		like := "%" + q + "%"
+		like := "%" + strings.ToLower(q) + "%"
 		db = db.Where(
 			r.db.Where("LOWER(products.name) LIKE ?", like).
 				Or("LOWER(products.description) LIKE ?", like).
@@ -72,13 +91,13 @@ func (r *ProductRepository) Search(q string, categoryID *uint, brandID *uint) ([
 		db = db.Where("products.brand_id = ?", *brandID)
 	}
 
-	err := db.
-		Preload("Category").
+	err := db.Preload("Category").
 		Preload("Brand").
 		Preload("Images").
 		Preload("Sizes").
 		Preload("Colors").
 		Preload("Groups").
+		Preload("Prices").
 		Order("created_at DESC").
 		Find(&products).Error
 

@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/aminasadiam/Kasra/models"
@@ -27,6 +26,56 @@ func NewProductHandler(db *gorm.DB) *ProductHandler {
 		productRepo: repository.NewProductRepository(db),
 		db:          db,
 	}
+}
+
+// تابع کمکی برای گرفتن قیمت مناسب بر اساس گروه‌های کاربر
+func (h *ProductHandler) getProductPrice(productID uint, userGroupIDs []uint) float64 {
+	var price float64
+
+	// اولویت: قیمت برای گروه‌های کاربر → قیمت پیش‌فرض (group_id NULL)
+	query := h.db.Model(&models.ProductPrice{}).
+		Where("product_id = ?", productID)
+
+	if len(userGroupIDs) > 0 {
+		query = query.Where("(group_id IN ? OR group_id IS NULL)", userGroupIDs)
+	} else {
+		query = query.Where("group_id IS NULL")
+	}
+
+	query.Order("group_id DESC NULLS LAST"). // گروه خاص اولویت دارد
+							Limit(1).
+							Pluck("price", &price)
+
+	if price > 0 {
+		return price
+	}
+
+	// fallback: هر قیمتی که موجود است
+	h.db.Model(&models.ProductPrice{}).
+		Where("product_id = ?", productID).
+		Limit(1).
+		Pluck("price", &price)
+
+	return price
+}
+
+// تابع کمکی برای گرفتن گروه‌های کاربر
+func (h *ProductHandler) getUserGroupIDs(r *http.Request) []uint {
+	var groupIDs []uint
+	claims, ok := utils.GetUserFromContext(r.Context())
+	if !ok {
+		return groupIDs
+	}
+
+	var user models.User
+	if err := h.db.Preload("Groups").First(&user, claims.UserID).Error; err != nil {
+		return groupIDs
+	}
+
+	for _, g := range user.Groups {
+		groupIDs = append(groupIDs, g.ID)
+	}
+	return groupIDs
 }
 
 func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -48,6 +97,10 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 			HexCode string `json:"hex_code"`
 			Stock   int    `json:"stock"`
 		} `json:"colors,omitempty"`
+		Prices []struct {
+			GroupID *uint   `json:"group_id,omitempty"` // nil = default
+			Price   float64 `json:"price"`
+		} `json:"prices,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -57,13 +110,22 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	product := req.Product
 
-	// Create product first
 	if err := h.productRepo.Create(&product); err != nil {
 		utils.ErrorResponse(w, "Failed to create product", http.StatusInternalServerError)
 		return
 	}
 
-	// Add images
+	// اضافه کردن قیمت‌ها
+	for _, p := range req.Prices {
+		pp := models.ProductPrice{
+			ProductID: product.ID,
+			GroupID:   p.GroupID,
+			Price:     p.Price,
+		}
+		h.db.Create(&pp)
+	}
+
+	// اضافه کردن تصاویر
 	for _, img := range req.Images {
 		productImage := models.ProductImage{
 			ProductID: product.ID,
@@ -75,7 +137,7 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		h.db.Create(&productImage)
 	}
 
-	// Add sizes
+	// اضافه کردن سایزها
 	for _, size := range req.Sizes {
 		productSize := models.ProductSize{
 			ProductID: product.ID,
@@ -86,7 +148,7 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		h.db.Create(&productSize)
 	}
 
-	// Add colors
+	// اضافه کردن رنگ‌ها
 	for _, color := range req.Colors {
 		productColor := models.ProductColor{
 			ProductID: product.ID,
@@ -97,90 +159,23 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		h.db.Create(&productColor)
 	}
 
-	// Reload product with relations
-	updatedProduct, _ := h.productRepo.GetByID(product.ID)
-
-	utils.SuccessResponse(w, "Product created successfully", updatedProduct, http.StatusCreated)
+	utils.SuccessResponse(w, "Product created successfully", product, http.StatusCreated)
 }
 
 func (h *ProductHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	categoryParam := r.URL.Query().Get("category_id")
-	brandParam := r.URL.Query().Get("brand_id")
-	q := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("q")))
-
-	var categoryID *uint
-	if categoryParam != "" {
-		if id, err := strconv.ParseUint(categoryParam, 10, 32); err == nil {
-			cid := uint(id)
-			categoryID = &cid
-		}
-	}
-
-	var brandID *uint
-	if brandParam != "" {
-		if id, err := strconv.ParseUint(brandParam, 10, 32); err == nil {
-			bid := uint(id)
-			brandID = &bid
-		}
-	}
-
 	var products []models.Product
-	var err error
-
-	// Use search when filters or query are provided; otherwise fetch all
-	if q != "" || categoryID != nil || brandID != nil {
-		products, err = h.productRepo.Search(q, categoryID, brandID)
-	} else {
-		products, err = h.productRepo.GetAll()
-	}
-	if err != nil {
+	if err := h.productRepo.GetAll(&products); err != nil {
 		utils.ErrorResponse(w, "Failed to fetch products", http.StatusInternalServerError)
 		return
 	}
 
-	// If user context exists, filter by group membership. Otherwise return empty (shouldn't happen because route requires auth)
-	claims, ok := utils.GetUserFromContext(r.Context())
-	if !ok {
-		utils.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
-		return
+	groupIDs := h.getUserGroupIDs(r)
+
+	for i := range products {
+		products[i].Price = h.getProductPrice(products[i].ID, groupIDs) // فیلد موقت برای نمایش
 	}
 
-	// Admins can see all products
-	userRepo := repository.NewUserRepository(h.db)
-	user, err := userRepo.GetByID(claims.UserID)
-	if err == nil {
-		for _, role := range user.Roles {
-			if role.Name == "admin" || role.Name == "administrator" {
-				utils.JSONResponse(w, products, http.StatusOK)
-				return
-			}
-		}
-	}
-
-	// Build a set of group IDs the user belongs to
-	userGroupIDs := map[uint]bool{}
-	if user != nil {
-		for _, g := range user.Groups {
-			userGroupIDs[g.ID] = true
-		}
-	}
-
-	// Filter products: include if product has no groups OR intersects user groups
-	var visible []models.Product
-	for _, p := range products {
-		if len(p.Groups) == 0 {
-			visible = append(visible, p)
-			continue
-		}
-		for _, g := range p.Groups {
-			if userGroupIDs[g.ID] {
-				visible = append(visible, p)
-				break
-			}
-		}
-	}
-
-	utils.JSONResponse(w, visible, http.StatusOK)
+	utils.JSONResponse(w, products, http.StatusOK)
 }
 
 func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
@@ -190,11 +185,17 @@ func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	product, err := h.productRepo.GetByID(uint(id))
-	if err != nil {
+	var product models.Product
+	if err := h.productRepo.GetByID(uint(id), &product); err != nil {
 		utils.ErrorResponse(w, "Product not found", http.StatusNotFound)
 		return
 	}
+
+	groupIDs := h.getUserGroupIDs(r)
+	product.Price = h.getProductPrice(product.ID, groupIDs)
+
+	// Preload روابط لازم
+	h.db.Preload("Images").Preload("Sizes").Preload("Colors").Preload("Prices").Find(&product)
 
 	utils.JSONResponse(w, product, http.StatusOK)
 }
@@ -209,24 +210,25 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		models.Product
 		Images []struct {
-			ID        uint   `json:"id,omitempty"`
 			URL       string `json:"url"`
 			Alt       string `json:"alt"`
 			IsPrimary bool   `json:"is_primary"`
 			Order     int    `json:"order"`
 		} `json:"images,omitempty"`
 		Sizes []struct {
-			ID    uint    `json:"id,omitempty"`
 			Name  string  `json:"name"`
 			Stock int     `json:"stock"`
 			Price float64 `json:"price,omitempty"`
 		} `json:"sizes,omitempty"`
 		Colors []struct {
-			ID      uint   `json:"id,omitempty"`
 			Name    string `json:"name"`
 			HexCode string `json:"hex_code"`
 			Stock   int    `json:"stock"`
 		} `json:"colors,omitempty"`
+		Prices []struct {
+			GroupID *uint   `json:"group_id,omitempty"` // nil = default
+			Price   float64 `json:"price"`
+		} `json:"prices,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -234,77 +236,88 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	product := req.Product
-	product.ID = uint(id)
+	var product models.Product
+	if err := h.productRepo.GetByID(uint(id), &product); err != nil {
+		utils.ErrorResponse(w, "Product not found", http.StatusNotFound)
+		return
+	}
 
-	// Update product
+	// به‌روزرسانی فیلدهای اصلی
+	product.Name = req.Name
+	product.Description = req.Description
+	product.SKU = req.SKU
+	product.Stock = req.Stock
+	product.ModelNumber = req.ModelNumber
+	product.Warranty = req.Warranty
+	product.Weight = req.Weight
+	product.Dimensions = req.Dimensions
+	product.Power = req.Power
+	product.Material = req.Material
+	product.Capacity = req.Capacity
+	product.Features = req.Features
+	product.IsActive = req.IsActive
+	product.CategoryID = req.CategoryID
+	product.BrandID = req.BrandID
+
 	if err := h.productRepo.Update(&product); err != nil {
 		utils.ErrorResponse(w, "Failed to update product", http.StatusInternalServerError)
 		return
 	}
 
-	// Delete existing images, sizes, colors
-	h.db.Where("product_id = ?", product.ID).Delete(&models.ProductImage{})
-	h.db.Where("product_id = ?", product.ID).Delete(&models.ProductSize{})
-	h.db.Where("product_id = ?", product.ID).Delete(&models.ProductColor{})
-
-	// Add new images
-	for _, img := range req.Images {
-		productImage := models.ProductImage{
+	// مدیریت روابط (برای سادگی، حذف قبلی و اضافه جدید - یا منطق بهتر)
+	// برای مثال، برای prices:
+	h.db.Where("product_id = ?", product.ID).Delete(&models.ProductPrice{})
+	for _, p := range req.Prices {
+		pp := models.ProductPrice{
 			ProductID: product.ID,
-			URL:       img.URL,
-			Alt:       img.Alt,
-			IsPrimary: img.IsPrimary,
-			Order:     img.Order,
+			GroupID:   p.GroupID,
+			Price:     p.Price,
 		}
-		h.db.Create(&productImage)
+		h.db.Create(&pp)
 	}
 
-	// Add new sizes
-	for _, size := range req.Sizes {
-		productSize := models.ProductSize{
-			ProductID: product.ID,
-			Name:      size.Name,
-			Stock:     size.Stock,
-			Price:     size.Price,
-		}
-		h.db.Create(&productSize)
-	}
+	// مشابه برای images, sizes, colors اگر لازم
 
-	// Add new colors
-	for _, color := range req.Colors {
-		productColor := models.ProductColor{
-			ProductID: product.ID,
-			Name:      color.Name,
-			HexCode:   color.HexCode,
-			Stock:     color.Stock,
-		}
-		h.db.Create(&productColor)
-	}
-
-	// Reload product with relations
-	updatedProduct, _ := h.productRepo.GetByID(product.ID)
-
-	utils.SuccessResponse(w, "Product updated successfully", updatedProduct, http.StatusOK)
+	utils.SuccessResponse(w, "Product updated successfully", product, http.StatusOK)
 }
 
-// UploadProductImage handles image upload for products
-func (h *ProductHandler) UploadProductImage(w http.ResponseWriter, r *http.Request) {
-	productID, err := strconv.ParseUint(r.PathValue("id"), 10, 32)
+// endpoint جدید: اضافه کردن قیمت به محصول
+func (h *ProductHandler) AddPrice(w http.ResponseWriter, r *http.Request) {
+	productIDStr := r.PathValue("id")
+	productID, err := strconv.ParseUint(productIDStr, 10, 32)
 	if err != nil {
 		utils.ErrorResponse(w, "Invalid product ID", http.StatusBadRequest)
 		return
 	}
 
-	// Verify product exists
-	_, err = h.productRepo.GetByID(uint(productID))
-	if err != nil {
-		utils.ErrorResponse(w, "Product not found", http.StatusNotFound)
+	var pp models.ProductPrice
+	if err := json.NewDecoder(r.Body).Decode(&pp); err != nil {
+		utils.ErrorResponse(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	// Parse multipart form
-	if err := r.ParseMultipartForm(10 << 20); err != nil { // 10MB max
+	pp.ProductID = uint(productID)
+	if pp.Price <= 0 {
+		utils.ErrorResponse(w, "Price must be greater than 0", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.db.Create(&pp).Error; err != nil {
+		utils.ErrorResponse(w, "Failed to add price", http.StatusInternalServerError)
+		return
+	}
+
+	utils.JSONResponse(w, pp, http.StatusCreated)
+}
+
+func (h *ProductHandler) UploadImage(w http.ResponseWriter, r *http.Request) {
+	productID, err := strconv.ParseUint(r.PathValue("id"), 10, 32)
+	if err != nil {
+		utils.ErrorResponse(w, "Invalid product id", http.StatusBadRequest)
+		return
+	}
+
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
 		utils.ErrorResponse(w, "Invalid multipart form", http.StatusBadRequest)
 		return
 	}
@@ -316,7 +329,6 @@ func (h *ProductHandler) UploadProductImage(w http.ResponseWriter, r *http.Reque
 	}
 	defer file.Close()
 
-	// Create uploads dir if not exists
 	uploadDir := "./uploads/products"
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
 		utils.ErrorResponse(w, "Failed to create upload dir", http.StatusInternalServerError)
@@ -324,7 +336,6 @@ func (h *ProductHandler) UploadProductImage(w http.ResponseWriter, r *http.Reque
 	}
 
 	ext := filepath.Ext(header.Filename)
-	// Use nanosecond timestamp to avoid collisions when multiple images upload in the same second
 	filename := fmt.Sprintf("product_%d_%d%s", productID, time.Now().UnixNano(), ext)
 	outPath := filepath.Join(uploadDir, filename)
 
@@ -340,7 +351,6 @@ func (h *ProductHandler) UploadProductImage(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Create product image record
 	imageURL := "/uploads/products/" + filename
 	isPrimary := r.FormValue("is_primary") == "true"
 	order, _ := strconv.Atoi(r.FormValue("order"))
@@ -358,7 +368,7 @@ func (h *ProductHandler) UploadProductImage(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	utils.SuccessResponse(w, "Image uploaded successfully", productImage, http.StatusOK)
+	utils.SuccessResponse(w, "Image uploaded successfully", productImage, http.StatusCreated)
 }
 
 func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {

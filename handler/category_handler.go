@@ -37,8 +37,8 @@ func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CategoryHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	categories, err := h.categoryRepo.GetAll()
-	if err != nil {
+	var categories []models.Category
+	if err := h.categoryRepo.GetAllWithChildren(&categories); err != nil {
 		utils.ErrorResponse(w, "Failed to fetch categories", http.StatusInternalServerError)
 		return
 	}
@@ -46,18 +46,12 @@ func (h *CategoryHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CategoryHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(r.PathValue("id"), 10, 32)
-	if err != nil {
-		utils.ErrorResponse(w, "Invalid category ID", http.StatusBadRequest)
-		return
-	}
-
-	category, err := h.categoryRepo.GetByID(uint(id))
-	if err != nil {
+	id, _ := strconv.ParseUint(r.PathValue("id"), 10, 32)
+	var category models.Category
+	if err := h.categoryRepo.GetByIDWithChildren(uint(id), &category); err != nil {
 		utils.ErrorResponse(w, "Category not found", http.StatusNotFound)
 		return
 	}
-
 	utils.JSONResponse(w, category, http.StatusOK)
 }
 
@@ -108,4 +102,3 @@ func (h *CategoryHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	utils.SuccessResponse(w, "Category deleted successfully", nil, http.StatusOK)
 }
-

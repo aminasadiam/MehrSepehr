@@ -42,3 +42,11 @@ func (r *CategoryRepository) GetBySlug(slug string) (*models.Category, error) {
 	err := r.db.Where("slug = ?", slug).Preload("Products").First(&category).Error
 	return &category, err
 }
+
+func (r *CategoryRepository) GetAllWithChildren(categories *[]models.Category) error {
+	return r.db.Preload("Children").Preload("Products").Find(categories).Error
+}
+
+func (r *CategoryRepository) GetByIDWithChildren(id uint, category *models.Category) error {
+	return r.db.Preload("Children").Preload("Products").First(category, id).Error
+}
