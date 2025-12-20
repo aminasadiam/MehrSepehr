@@ -84,7 +84,11 @@ export interface Wallet {
 }
 
 const parseId = (value: any): number =>
-  typeof value === "number" ? value : typeof value === "string" ? Number(value) : Number(value ?? 0);
+  typeof value === "number"
+    ? value
+    : typeof value === "string"
+    ? Number(value)
+    : Number(value ?? 0);
 
 export const normalizeCategory = (raw: any): Category => ({
   id: parseId(raw?.id ?? raw?.ID ?? raw?.category_id ?? raw?.CategoryID),
@@ -111,7 +115,8 @@ export const normalizeProductSize = (raw: any): ProductSize => ({
   id: parseId(raw?.id ?? raw?.ID),
   name: raw?.name ?? raw?.Name ?? "",
   stock: Number(raw?.stock ?? raw?.Stock ?? 0),
-  price: raw?.price ?? raw?.Price ? Number(raw?.price ?? raw?.Price) : undefined,
+  price:
+    raw?.price ?? raw?.Price ? Number(raw?.price ?? raw?.Price) : undefined,
 });
 
 export const normalizeProductColor = (raw: any): ProductColor => ({
@@ -130,7 +135,8 @@ export const normalizeProduct = (raw: any): Product => ({
   stock: Number(raw?.stock ?? raw?.Stock ?? 0),
   modelNumber: raw?.model_number ?? raw?.ModelNumber,
   warranty: raw?.warranty ?? raw?.Warranty,
-  weight: raw?.weight ?? raw?.Weight ? Number(raw?.weight ?? raw?.Weight) : undefined,
+  weight:
+    raw?.weight ?? raw?.Weight ? Number(raw?.weight ?? raw?.Weight) : undefined,
   dimensions: raw?.dimensions ?? raw?.Dimensions,
   power: raw?.power ?? raw?.Power,
   material: raw?.material ?? raw?.Material,
@@ -138,21 +144,29 @@ export const normalizeProduct = (raw: any): Product => ({
   features: raw?.features ?? raw?.Features,
   isActive: raw?.is_active ?? raw?.IsActive ?? true,
   categoryId: raw?.category_id ?? raw?.CategoryID,
-  category: raw?.category || raw?.Category ? normalizeCategory(raw?.category || raw?.Category) : undefined,
+  category:
+    raw?.category || raw?.Category
+      ? normalizeCategory(raw?.category || raw?.Category)
+      : undefined,
   brandId: raw?.brand_id ?? raw?.BrandID,
-  brand: raw?.brand || raw?.Brand ? normalizeBrand(raw?.brand || raw?.Brand) : undefined,
-  images: Array.isArray(raw?.images ?? raw?.Images) 
-    ? (raw?.images ?? raw?.Images).map(normalizeProductImage).sort((a, b) => {
-        // Sort by isPrimary first, then by order
-        if (a.isPrimary && !b.isPrimary) return -1;
-        if (!a.isPrimary && b.isPrimary) return 1;
-        return a.order - b.order;
-      })
+  brand:
+    raw?.brand || raw?.Brand
+      ? normalizeBrand(raw?.brand || raw?.Brand)
+      : undefined,
+  images: Array.isArray(raw?.images ?? raw?.Images)
+    ? (raw?.images ?? raw?.Images)
+        .map(normalizeProductImage)
+        .sort((a: ProductImage, b: ProductImage) => {
+          // Sort by isPrimary first, then by order
+          if (a.isPrimary && !b.isPrimary) return -1;
+          if (!a.isPrimary && b.isPrimary) return 1;
+          return a.order - b.order;
+        })
     : undefined,
-  sizes: Array.isArray(raw?.sizes ?? raw?.Sizes) 
+  sizes: Array.isArray(raw?.sizes ?? raw?.Sizes)
     ? (raw?.sizes ?? raw?.Sizes).map(normalizeProductSize)
     : undefined,
-  colors: Array.isArray(raw?.colors ?? raw?.Colors) 
+  colors: Array.isArray(raw?.colors ?? raw?.Colors)
     ? (raw?.colors ?? raw?.Colors).map(normalizeProductColor)
     : undefined,
 });
@@ -162,7 +176,10 @@ export const normalizeOrderDetail = (raw: any): OrderDetail => ({
   productId: raw?.product_id ?? raw?.ProductID,
   quantity: Number(raw?.quantity ?? raw?.Quantity ?? 0),
   price: Number(raw?.price ?? raw?.Price ?? 0),
-  product: raw?.product || raw?.Product ? normalizeProduct(raw?.product || raw?.Product) : undefined,
+  product:
+    raw?.product || raw?.Product
+      ? normalizeProduct(raw?.product || raw?.Product)
+      : undefined,
 });
 
 export const normalizeOrder = (raw: any): Order => ({
@@ -183,4 +200,3 @@ export const normalizeWallet = (raw: any): Wallet => ({
   currency: raw?.currency ?? raw?.Currency ?? "IRR",
   updatedAt: raw?.updated_at ?? raw?.UpdatedAt,
 });
-

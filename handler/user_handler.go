@@ -77,7 +77,7 @@ func (h *UserHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorResponse(w, "User not found", http.StatusNotFound)
 		return
 	}
-	existing.Avatar = "/uploads/avatars/" + filename
+	existing.Avatar = "http://localhost:8080/assets/avatar/" + filename
 	if err := h.userRepo.Update(existing); err != nil {
 		utils.ErrorResponse(w, "Failed to update user avatar", http.StatusInternalServerError)
 		return
@@ -133,7 +133,7 @@ func (h *UserHandler) AdminUploadAvatar(w http.ResponseWriter, r *http.Request) 
 		utils.ErrorResponse(w, "User not found", http.StatusNotFound)
 		return
 	}
-	existing.Avatar = "/uploads/avatars/" + filename
+	existing.Avatar = "http://localhost:8080/assets/avatar/" + filename
 	if err := h.userRepo.Update(existing); err != nil {
 		utils.ErrorResponse(w, "Failed to update user avatar", http.StatusInternalServerError)
 		return

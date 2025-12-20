@@ -1,4 +1,11 @@
-import { Component, createSignal, onMount, For, Show, createMemo } from "solid-js";
+import {
+  Component,
+  createSignal,
+  onMount,
+  For,
+  Show,
+  createMemo,
+} from "solid-js";
 import { categoriesApi } from "../../utils/api";
 
 const Categories: Component = () => {
@@ -89,7 +96,9 @@ const Categories: Component = () => {
     return items().filter((cat: any) => {
       const name = String(cat.Name ?? cat.name ?? "").toLowerCase();
       const slug = String(cat.Slug ?? cat.slug ?? "").toLowerCase();
-      const desc = String(cat.Description ?? cat.description ?? "").toLowerCase();
+      const desc = String(
+        cat.Description ?? cat.description ?? ""
+      ).toLowerCase();
       return name.includes(q) || slug.includes(q) || desc.includes(q);
     });
   });
@@ -100,7 +109,9 @@ const Categories: Component = () => {
     <div dir="rtl">
       <div class="flex items-center justify-between mb-6">
         <div>
-          <h2 class="text-3xl font-bold text-slate-800 mb-2">مدیریت دسته‌بندی‌ها</h2>
+          <h2 class="text-3xl font-bold text-slate-800 mb-2">
+            مدیریت دسته‌بندی‌ها
+          </h2>
           <p class="text-slate-600">ایجاد و مدیریت دسته‌بندی محصولات</p>
         </div>
         <div class="flex gap-3">
@@ -129,7 +140,9 @@ const Categories: Component = () => {
             onInput={(e) => setSearch(e.currentTarget.value)}
             class="w-full px-4 py-2 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           />
-          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+            🔍
+          </span>
         </div>
       </div>
 
@@ -217,7 +230,7 @@ const Categories: Component = () => {
             onClick={(e) => e.stopPropagation()}
             dir="rtl"
           >
-            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-xl">
+            <div class="bg-linear-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-xl">
               <h3 class="text-xl font-bold">ایجاد دسته‌بندی جدید</h3>
             </div>
             <div class="p-6 space-y-4">
@@ -230,7 +243,10 @@ const Categories: Component = () => {
                   placeholder="مثال: الکترونیک"
                   value={newCategory().name}
                   onInput={(e) =>
-                    setNewCategory({ ...newCategory(), name: e.currentTarget.value })
+                    setNewCategory({
+                      ...newCategory(),
+                      name: e.currentTarget.value,
+                    })
                   }
                   class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
@@ -244,7 +260,10 @@ const Categories: Component = () => {
                   placeholder="مثال: electronics"
                   value={newCategory().slug}
                   onInput={(e) =>
-                    setNewCategory({ ...newCategory(), slug: e.currentTarget.value })
+                    setNewCategory({
+                      ...newCategory(),
+                      slug: e.currentTarget.value,
+                    })
                   }
                   class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
@@ -257,7 +276,10 @@ const Categories: Component = () => {
                   placeholder="توضیحات دسته‌بندی..."
                   value={newCategory().description}
                   onInput={(e) =>
-                    setNewCategory({ ...newCategory(), description: e.currentTarget.value })
+                    setNewCategory({
+                      ...newCategory(),
+                      description: e.currentTarget.value,
+                    })
                   }
                   rows={3}
                   class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -296,7 +318,7 @@ const Categories: Component = () => {
             onClick={(e) => e.stopPropagation()}
             dir="rtl"
           >
-            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-xl">
+            <div class="bg-linear-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-xl">
               <h3 class="text-xl font-bold">ویرایش دسته‌بندی</h3>
             </div>
             <div class="p-6 space-y-4">
@@ -333,7 +355,10 @@ const Categories: Component = () => {
                 <textarea
                   value={editing()?.description ?? ""}
                   onInput={(e) =>
-                    setEditing({ ...editing(), description: e.currentTarget.value })
+                    setEditing({
+                      ...editing(),
+                      description: e.currentTarget.value,
+                    })
                   }
                   rows={3}
                   class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"

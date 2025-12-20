@@ -95,7 +95,7 @@ const ProductDetail = () => {
           onClick={() => navigate(-1)}
           aria-label="بازگشت"
         >
-          <i class="fa-solid fa-arrow-right group-hover:translate-x-[-4px] transition-transform"></i>
+          <i class="fa-solid fa-arrow-right group-hover:-translate-x-1 transition-transform"></i>
           بازگشت
         </button>
       </div>
@@ -583,7 +583,7 @@ const ProductDetail = () => {
                         class="group inline-flex items-center gap-2 px-6 py-3 bg-white rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300 text-indigo-600 font-bold border-2 border-indigo-200 hover:border-indigo-400"
                       >
                         مشاهده همه
-                        <i class="fa-solid fa-arrow-left group-hover:translate-x-[-4px] transition-transform"></i>
+                        <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
                       </A>
                     </div>
                     <div class="product-grid">

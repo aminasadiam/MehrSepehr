@@ -1,4 +1,11 @@
-import { Component, createSignal, onMount, For, Show, createMemo } from "solid-js";
+import {
+  Component,
+  createSignal,
+  onMount,
+  For,
+  Show,
+  createMemo,
+} from "solid-js";
 import { productsApi, categoriesApi, adminApi } from "../../utils/api";
 import { A } from "@solidjs/router";
 
@@ -127,7 +134,17 @@ const Products: Component = () => {
   const addImage = () => {
     setFormData({
       ...formData(),
-      images: [...formData().images, { file: null, url: "", alt: "", is_primary: false, order: formData().images.length, preview: null }],
+      images: [
+        ...formData().images,
+        {
+          file: null,
+          url: "",
+          alt: "",
+          is_primary: false,
+          order: formData().images.length,
+          preview: null,
+        },
+      ],
     });
   };
 
@@ -223,9 +240,9 @@ const Products: Component = () => {
       if (data.brand_id) payload.brand_id = data.brand_id;
       payload.sizes = data.sizes.filter((s) => s.name.trim());
       payload.colors = data.colors.filter((c) => c.name.trim());
-      
+
       let productId: number;
-      
+
       // For new products, create first then upload images
       if (!editId()) {
         payload.images = []; // No images in initial create
@@ -235,7 +252,7 @@ const Products: Component = () => {
           alert("خطا در دریافت شناسه محصول");
           return;
         }
-        
+
         // Upload all images for new product
         const imagesToUpload = data.images.filter((img) => img.file);
         for (let i = 0; i < imagesToUpload.length; i++) {
@@ -244,7 +261,10 @@ const Products: Component = () => {
             const uploadFormData = new FormData();
             uploadFormData.append("image", img.file!);
             uploadFormData.append("alt", img.alt || "");
-            uploadFormData.append("is_primary", img.is_primary ? "true" : "false");
+            uploadFormData.append(
+              "is_primary",
+              img.is_primary ? "true" : "false"
+            );
             uploadFormData.append("order", String(img.order || i));
             await productsApi.uploadImage(productId, uploadFormData);
           } catch (e) {
@@ -257,26 +277,35 @@ const Products: Component = () => {
         // For existing products, upload new files first, then update with all image URLs
         productId = editId()!;
         const uploadedImageUrls: string[] = [];
-        
+
         // Upload new images first
-        const imagesToUpload = data.images.filter((img) => img.file && !img.url);
+        const imagesToUpload = data.images.filter(
+          (img) => img.file && !img.url
+        );
         for (let i = 0; i < imagesToUpload.length; i++) {
           const img = imagesToUpload[i];
           try {
             const uploadFormData = new FormData();
             uploadFormData.append("image", img.file!);
             uploadFormData.append("alt", img.alt || "");
-            uploadFormData.append("is_primary", img.is_primary ? "true" : "false");
+            uploadFormData.append(
+              "is_primary",
+              img.is_primary ? "true" : "false"
+            );
             uploadFormData.append("order", String(img.order || i));
-            const uploadRes = await productsApi.uploadImage(productId, uploadFormData);
-            const uploadedUrl = (uploadRes.data as any)?.url || (uploadRes.data as any)?.URL;
+            const uploadRes = await productsApi.uploadImage(
+              productId,
+              uploadFormData
+            );
+            const uploadedUrl =
+              (uploadRes.data as any)?.url || (uploadRes.data as any)?.URL;
             if (uploadedUrl) uploadedImageUrls.push(uploadedUrl);
           } catch (e) {
             console.error("Error uploading image:", e);
             alert(`خطا در بارگذاری تصویر ${i + 1}`);
           }
         }
-        
+
         // Build images array: existing URLs + newly uploaded URLs
         let uploadedIndex = 0;
         payload.images = data.images
@@ -300,15 +329,16 @@ const Products: Component = () => {
               order: img.order || 0,
             };
           });
-        
+
         await productsApi.update(productId, payload);
         alert("محصول با موفقیت به‌روزرسانی شد");
       }
 
       // Handle groups
-      const existingGroups = items()
-        .find((p: any) => (p.ID ?? p.id) === productId)
-        ?.Groups?.map((g: any) => g.ID ?? g.id) || [];
+      const existingGroups =
+        items()
+          .find((p: any) => (p.ID ?? p.id) === productId)
+          ?.Groups?.map((g: any) => g.ID ?? g.id) || [];
 
       for (const gid of existingGroups) {
         try {
@@ -385,19 +415,23 @@ const Products: Component = () => {
       <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-4 mb-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="relative">
-          <input
+            <input
               type="text"
               placeholder="جستجو در محصولات..."
               value={search()}
               onInput={(e) => setSearch(e.currentTarget.value)}
               class="w-full px-4 py-2 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
-            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
-        </div>
+            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+              🔍
+            </span>
+          </div>
           <select
             value={categoryFilter() ?? ""}
             onInput={(e) =>
-              setCategoryFilter(e.currentTarget.value ? Number(e.currentTarget.value) : null)
+              setCategoryFilter(
+                e.currentTarget.value ? Number(e.currentTarget.value) : null
+              )
             }
             class="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           >
@@ -427,8 +461,12 @@ const Products: Component = () => {
           fallback={
             <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
               <div class="text-6xl mb-4">📦</div>
-              <h3 class="text-xl font-semibold text-slate-800 mb-2">محصولی یافت نشد</h3>
-              <p class="text-slate-600 mb-4">هیچ محصولی با این فیلترها وجود ندارد</p>
+              <h3 class="text-xl font-semibold text-slate-800 mb-2">
+                محصولی یافت نشد
+              </h3>
+              <p class="text-slate-600 mb-4">
+                هیچ محصولی با این فیلترها وجود ندارد
+              </p>
             </div>
           }
         >
@@ -440,7 +478,12 @@ const Products: Component = () => {
                     {p.Images && p.Images.length > 0 ? (
                       <img
                         src={p.Images[0]?.URL ?? p.Images[0]?.url}
-                        alt={p.Images[0]?.Alt ?? p.Images[0]?.alt ?? p.Name ?? p.name}
+                        alt={
+                          p.Images[0]?.Alt ??
+                          p.Images[0]?.alt ??
+                          p.Name ??
+                          p.name
+                        }
                         class="w-full h-48 object-cover rounded-lg mb-3"
                       />
                     ) : (
@@ -470,7 +513,7 @@ const Products: Component = () => {
                     ) : null}
                   </div>
                   <div class="flex items-center justify-between mb-4 pt-4 border-t border-slate-200">
-      <div>
+                    <div>
                       <div class="text-lg font-bold text-indigo-600">
                         {Number(p.Price ?? p.price ?? 0).toLocaleString()} تومان
                       </div>
@@ -524,7 +567,7 @@ const Products: Component = () => {
             onClick={(e) => e.stopPropagation()}
             dir="rtl"
           >
-            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-xl sticky top-0 z-10">
+            <div class="bg-linear-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-xl sticky top-0 z-10">
               <h3 class="text-xl font-bold">
                 {editId() ? "ویرایش محصول" : "ایجاد محصول جدید"}
               </h3>
@@ -543,55 +586,77 @@ const Products: Component = () => {
                       placeholder="نام محصول"
                       value={formData().name}
                       onInput={(e) =>
-                        setFormData({ ...formData(), name: e.currentTarget.value })
+                        setFormData({
+                          ...formData(),
+                          name: e.currentTarget.value,
+                        })
                       }
                       class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">SKU *</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">
+                      SKU *
+                    </label>
                     <input
                       type="text"
                       placeholder="کد محصول"
                       value={formData().sku}
                       onInput={(e) =>
-                        setFormData({ ...formData(), sku: e.currentTarget.value })
+                        setFormData({
+                          ...formData(),
+                          sku: e.currentTarget.value,
+                        })
                       }
                       class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">قیمت</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">
+                      قیمت
+                    </label>
                     <input
                       type="number"
                       placeholder="0"
                       value={formData().price}
                       onInput={(e) =>
-                        setFormData({ ...formData(), price: e.currentTarget.value })
+                        setFormData({
+                          ...formData(),
+                          price: e.currentTarget.value,
+                        })
                       }
                       class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">موجودی</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">
+                      موجودی
+                    </label>
                     <input
                       type="number"
                       placeholder="0"
                       value={formData().stock}
                       onInput={(e) =>
-                        setFormData({ ...formData(), stock: e.currentTarget.value })
+                        setFormData({
+                          ...formData(),
+                          stock: e.currentTarget.value,
+                        })
                       }
                       class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">دسته‌بندی</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">
+                      دسته‌بندی
+                    </label>
                     <select
                       value={formData().category_id ?? ""}
                       onInput={(e) =>
                         setFormData({
                           ...formData(),
-                          category_id: e.currentTarget.value ? Number(e.currentTarget.value) : null,
+                          category_id: e.currentTarget.value
+                            ? Number(e.currentTarget.value)
+                            : null,
                         })
                       }
                       class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -599,19 +664,25 @@ const Products: Component = () => {
                       <option value="">بدون دسته‌بندی</option>
                       <For each={categories()}>
                         {(cat: any) => (
-                          <option value={cat.ID ?? cat.id}>{cat.Name ?? cat.name}</option>
+                          <option value={cat.ID ?? cat.id}>
+                            {cat.Name ?? cat.name}
+                          </option>
                         )}
                       </For>
                     </select>
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">برند</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">
+                      برند
+                    </label>
                     <select
                       value={formData().brand_id ?? ""}
                       onInput={(e) =>
                         setFormData({
                           ...formData(),
-                          brand_id: e.currentTarget.value ? Number(e.currentTarget.value) : null,
+                          brand_id: e.currentTarget.value
+                            ? Number(e.currentTarget.value)
+                            : null,
                         })
                       }
                       class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -619,19 +690,26 @@ const Products: Component = () => {
                       <option value="">بدون برند</option>
                       <For each={brands()}>
                         {(brand: any) => (
-                          <option value={brand.ID ?? brand.id}>{brand.Name ?? brand.name}</option>
+                          <option value={brand.ID ?? brand.id}>
+                            {brand.Name ?? brand.name}
+                          </option>
                         )}
                       </For>
                     </select>
                   </div>
                 </div>
                 <div class="mt-4">
-                  <label class="block text-sm font-medium text-slate-700 mb-2">توضیحات</label>
+                  <label class="block text-sm font-medium text-slate-700 mb-2">
+                    توضیحات
+                  </label>
                   <textarea
                     placeholder="توضیحات محصول..."
                     value={formData().description}
                     onInput={(e) =>
-                      setFormData({ ...formData(), description: e.currentTarget.value })
+                      setFormData({
+                        ...formData(),
+                        description: e.currentTarget.value,
+                      })
                     }
                     rows={3}
                     class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -644,96 +722,136 @@ const Products: Component = () => {
                 <h4 class="text-lg font-semibold mb-4">اطلاعات تکمیلی</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">شماره مدل</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">
+                      شماره مدل
+                    </label>
                     <input
                       type="text"
                       value={formData().model_number}
                       onInput={(e) =>
-                        setFormData({ ...formData(), model_number: e.currentTarget.value })
+                        setFormData({
+                          ...formData(),
+                          model_number: e.currentTarget.value,
+                        })
                       }
                       class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">گارانتی</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">
+                      گارانتی
+                    </label>
                     <input
                       type="text"
                       placeholder="مثال: 2 سال"
                       value={formData().warranty}
                       onInput={(e) =>
-                        setFormData({ ...formData(), warranty: e.currentTarget.value })
+                        setFormData({
+                          ...formData(),
+                          warranty: e.currentTarget.value,
+                        })
                       }
                       class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">وزن (کیلوگرم)</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">
+                      وزن (کیلوگرم)
+                    </label>
                     <input
                       type="number"
                       step="0.1"
                       value={formData().weight}
                       onInput={(e) =>
-                        setFormData({ ...formData(), weight: e.currentTarget.value })
+                        setFormData({
+                          ...formData(),
+                          weight: e.currentTarget.value,
+                        })
                       }
                       class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">ابعاد</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">
+                      ابعاد
+                    </label>
                     <input
                       type="text"
                       placeholder="مثال: 30x40x50 سانتی‌متر"
                       value={formData().dimensions}
                       onInput={(e) =>
-                        setFormData({ ...formData(), dimensions: e.currentTarget.value })
+                        setFormData({
+                          ...formData(),
+                          dimensions: e.currentTarget.value,
+                        })
                       }
                       class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">قدرت</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">
+                      قدرت
+                    </label>
                     <input
                       type="text"
                       placeholder="مثال: 1000W"
                       value={formData().power}
                       onInput={(e) =>
-                        setFormData({ ...formData(), power: e.currentTarget.value })
+                        setFormData({
+                          ...formData(),
+                          power: e.currentTarget.value,
+                        })
                       }
                       class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">جنس</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">
+                      جنس
+                    </label>
                     <input
                       type="text"
                       placeholder="مثال: استیل ضد زنگ"
                       value={formData().material}
                       onInput={(e) =>
-                        setFormData({ ...formData(), material: e.currentTarget.value })
+                        setFormData({
+                          ...formData(),
+                          material: e.currentTarget.value,
+                        })
                       }
                       class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">ظرفیت</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">
+                      ظرفیت
+                    </label>
                     <input
                       type="text"
                       placeholder="مثال: 5 لیتر"
                       value={formData().capacity}
                       onInput={(e) =>
-                        setFormData({ ...formData(), capacity: e.currentTarget.value })
+                        setFormData({
+                          ...formData(),
+                          capacity: e.currentTarget.value,
+                        })
                       }
                       class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">ویژگی‌ها</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">
+                      ویژگی‌ها
+                    </label>
                     <input
                       type="text"
                       placeholder="مثال: دیجیتال، تایمر، ضد چکه"
                       value={formData().features}
                       onInput={(e) =>
-                        setFormData({ ...formData(), features: e.currentTarget.value })
+                        setFormData({
+                          ...formData(),
+                          features: e.currentTarget.value,
+                        })
                       }
                       class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
@@ -745,7 +863,10 @@ const Products: Component = () => {
                       type="checkbox"
                       checked={formData().is_active}
                       onChange={(e) =>
-                        setFormData({ ...formData(), is_active: e.currentTarget.checked })
+                        setFormData({
+                          ...formData(),
+                          is_active: e.currentTarget.checked,
+                        })
                       }
                       class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                     />
@@ -771,8 +892,8 @@ const Products: Component = () => {
                       <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
                         <div class="flex gap-4 items-start">
                           {/* Image Preview */}
-                          <div class="flex-shrink-0">
-                            {(img.preview || img.url) ? (
+                          <div class="shrink-0">
+                            {img.preview || img.url ? (
                               <img
                                 src={img.preview || img.url}
                                 alt={img.alt || "Preview"}
@@ -796,7 +917,10 @@ const Products: Component = () => {
                                 accept="image/*"
                                 multiple
                                 onChange={(e) => {
-                                  handleImageFilesChange(index(), e.currentTarget.files);
+                                  handleImageFilesChange(
+                                    index(),
+                                    e.currentTarget.files
+                                  );
                                   // reset input so selecting same files again works
                                   e.currentTarget.value = "";
                                 }}
@@ -825,10 +949,15 @@ const Products: Component = () => {
                                   type="checkbox"
                                   checked={img.is_primary || false}
                                   onChange={(e) => {
-                                    const images = formData().images.map((im, i) =>
-                                      i === index()
-                                        ? { ...im, is_primary: e.currentTarget.checked }
-                                        : { ...im, is_primary: false }
+                                    const images = formData().images.map(
+                                      (im, i) =>
+                                        i === index()
+                                          ? {
+                                              ...im,
+                                              is_primary:
+                                                e.currentTarget.checked,
+                                            }
+                                          : { ...im, is_primary: false }
                                     );
                                     setFormData({ ...formData(), images });
                                   }}
@@ -883,7 +1012,9 @@ const Products: Component = () => {
                           value={size.stock}
                           onInput={(e) => {
                             const sizes = [...formData().sizes];
-                            sizes[index()].stock = Number(e.currentTarget.value);
+                            sizes[index()].stock = Number(
+                              e.currentTarget.value
+                            );
                             setFormData({ ...formData(), sizes });
                           }}
                           class="w-24 px-3 py-2 border border-slate-300 rounded-lg text-sm"
@@ -960,7 +1091,9 @@ const Products: Component = () => {
                           value={color.stock}
                           onInput={(e) => {
                             const colors = [...formData().colors];
-                            colors[index()].stock = Number(e.currentTarget.value);
+                            colors[index()].stock = Number(
+                              e.currentTarget.value
+                            );
                             setFormData({ ...formData(), colors });
                           }}
                           class="w-24 px-3 py-2 border border-slate-300 rounded-lg text-sm"
@@ -979,7 +1112,9 @@ const Products: Component = () => {
 
               {/* Groups */}
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">گروه‌ها</label>
+                <label class="block text-sm font-medium text-slate-700 mb-2">
+                  گروه‌ها
+                </label>
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto border border-slate-200 rounded-lg p-3">
                   <For each={groups()}>
                     {(g: any) => {
@@ -994,7 +1129,9 @@ const Products: Component = () => {
                               if (checked) {
                                 setFormData({
                                   ...formData(),
-                                  groups: currentGroups.filter((id) => id !== (g.ID ?? g.id)),
+                                  groups: currentGroups.filter(
+                                    (id) => id !== (g.ID ?? g.id)
+                                  ),
                                 });
                               } else {
                                 setFormData({
@@ -1032,7 +1169,7 @@ const Products: Component = () => {
               </div>
             </div>
           </div>
-      </div>
+        </div>
       </Show>
     </div>
   );

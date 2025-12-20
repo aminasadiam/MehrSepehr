@@ -38,7 +38,8 @@ const Permissions: Component = () => {
   };
 
   const deletePerm = async (id: number) => {
-    if (!confirm("آیا مطمئن هستید که می‌خواهید این دسترسی را حذف کنید؟")) return;
+    if (!confirm("آیا مطمئن هستید که می‌خواهید این دسترسی را حذف کنید؟"))
+      return;
     try {
       await adminApi.deletePermission(id);
       await load();
@@ -55,7 +56,9 @@ const Permissions: Component = () => {
     <div dir="rtl">
       <div class="flex items-center justify-between mb-6">
         <div>
-          <h2 class="text-3xl font-bold text-slate-800 mb-2">مدیریت دسترسی‌ها</h2>
+          <h2 class="text-3xl font-bold text-slate-800 mb-2">
+            مدیریت دسترسی‌ها
+          </h2>
           <p class="text-slate-600">ایجاد و مدیریت دسترسی‌های سیستم</p>
         </div>
         <button
@@ -138,7 +141,7 @@ const Permissions: Component = () => {
             onClick={(e) => e.stopPropagation()}
             dir="rtl"
           >
-            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-xl">
+            <div class="bg-linear-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-xl">
               <h3 class="text-xl font-bold">ایجاد دسترسی جدید</h3>
             </div>
             <div class="p-6 space-y-4">
@@ -155,7 +158,9 @@ const Permissions: Component = () => {
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">توضیحات</label>
+                <label class="block text-sm font-medium text-slate-700 mb-2">
+                  توضیحات
+                </label>
                 <textarea
                   placeholder="توضیحات دسترسی..."
                   value={newDesc()}

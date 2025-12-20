@@ -40,8 +40,8 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		} `json:"images,omitempty"`
 		Sizes []struct {
 			Name  string  `json:"name"`
-			Stock  int     `json:"stock"`
-			Price  float64 `json:"price,omitempty"`
+			Stock int     `json:"stock"`
+			Price float64 `json:"price,omitempty"`
 		} `json:"sizes,omitempty"`
 		Colors []struct {
 			Name    string `json:"name"`

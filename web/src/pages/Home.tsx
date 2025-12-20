@@ -32,8 +32,7 @@ const productImage = (product: Product, indexFallback: number) => {
   const primary =
     product.images?.find((i) => i.isPrimary) || product.images?.[0];
   const url = primary?.url;
-  if (url)
-    return url.startsWith("http") ? url : `http://localhost:8080${url}`;
+  if (url) return url.startsWith("http") ? url : `http://localhost:8080${url}`;
   return fallbackImages[indexFallback % fallbackImages.length];
 };
 
@@ -58,7 +57,7 @@ const Home = () => {
   return (
     <div class="min-h-screen" dir="rtl">
       {/* Hero Section - Modern Gradient */}
-      <section class="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600">
+      <section class="relative overflow-hidden bg-linear-to-br from-indigo-600 via-purple-600 to-pink-600">
         <div class="absolute inset-0 bg-black/10"></div>
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-20 sm:py-28 md:py-36">
           <div class="max-w-3xl">
@@ -85,7 +84,7 @@ const Home = () => {
               >
                 <span class="absolute inset-0 bg-linear-to-r from-indigo-50 to-purple-50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                 <span class="relative z-10">مشاهده محصولات</span>
-                <i class="fa-solid fa-arrow-left relative z-10 group-hover:translate-x-[-4px] transition-transform"></i>
+                <i class="fa-solid fa-arrow-left relative z-10 group-hover:-translate-x-1 transition-transform"></i>
               </A>
               <A
                 href="/products"
@@ -165,7 +164,7 @@ const Home = () => {
               class="group inline-flex items-center gap-2 px-6 py-3 bg-white rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300 text-indigo-600 font-bold"
             >
               مشاهده همه
-              <i class="fa-solid fa-arrow-left group-hover:translate-x-[-4px] transition-transform"></i>
+              <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
             </A>
           </div>
           <div class="product-grid">
@@ -178,7 +177,9 @@ const Home = () => {
                 fallback={
                   <div class="col-span-full rounded-3xl border-2 border-dashed border-slate-300 bg-white px-6 py-16 text-center">
                     <div class="text-6xl mb-4">📦</div>
-                    <p class="text-slate-600 text-lg">هیچ محصولی در حال حاضر موجود نیست.</p>
+                    <p class="text-slate-600 text-lg">
+                      هیچ محصولی در حال حاضر موجود نیست.
+                    </p>
                   </div>
                 }
               >
@@ -249,13 +250,13 @@ const Home = () => {
                             )}
                           </div>
 
-                          <h3 class="text-lg font-bold text-slate-900 line-clamp-2 min-h-[3.5rem] group-hover:text-indigo-600 transition-colors">
+                          <h3 class="text-lg font-bold text-slate-900 line-clamp-2 min-h-14 group-hover:text-indigo-600 transition-colors">
                             <A href={`/products/${product.id}`}>
                               {product.name}
                             </A>
                           </h3>
 
-                          <p class="text-sm text-slate-600 line-clamp-2 min-h-[2.5rem]">
+                          <p class="text-sm text-slate-600 line-clamp-2 min-h-10">
                             {product.description ||
                               "جزئیات محصول به زودی تکمیل می‌شود."}
                           </p>
@@ -313,15 +314,14 @@ const Home = () => {
             آماده خرید هستید؟
           </h2>
           <p class="text-lg sm:text-xl text-indigo-100 mb-10 max-w-2xl mx-auto leading-relaxed">
-            به فروشگاه ما مراجعه کنید و از بین هزاران محصول با کیفیت انتخاب
-            کنید
+            به فروشگاه ما مراجعه کنید و از بین هزاران محصول با کیفیت انتخاب کنید
           </p>
           <A
             href="/products"
             class="group inline-flex items-center justify-center gap-3 px-10 py-5 bg-white text-indigo-600 rounded-2xl font-bold text-lg shadow-2xl hover:shadow-indigo-500/50 hover:scale-105 transition-all duration-300"
           >
             مشاهده همه محصولات
-            <i class="fa-solid fa-arrow-left group-hover:translate-x-[-4px] transition-transform"></i>
+            <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
           </A>
         </div>
       </section>

@@ -113,7 +113,7 @@ const Products = () => {
                 class="group inline-flex items-center justify-center gap-3 px-6 py-3 bg-white/10 backdrop-blur-md border-2 border-white/30 text-white rounded-2xl font-bold hover:bg-white/20 hover:border-white/50 transition-all duration-300"
               >
                 پیگیری سفارش
-                <i class="fa-solid fa-arrow-left group-hover:translate-x-[-4px] transition-transform"></i>
+                <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
               </A>
             </div>
           </div>

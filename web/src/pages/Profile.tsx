@@ -4,7 +4,12 @@ import { useAuth } from "../store/auth";
 
 const Profile = () => {
   const auth = useAuth();
-  const [form, setForm] = createSignal({ username: "", email: "" });
+  const [form, setForm] = createSignal({
+    username: "",
+    email: "",
+    phone: "",
+    avatar: "",
+  });
   const [isSavingPassword, setIsSavingPassword] = createSignal(false);
   const [message, setMessage] = createSignal<{
     type: "success" | "error";

@@ -53,10 +53,10 @@ render(
   () => (
     <Router root={App}>
       <Route path="/" component={Home} />
-      <Route path="/products" component={Products} />
-      <Route path="/products/:id" component={ProductDetail} />
+      <Route path="/products" component={withProtection(Products)} />
+      <Route path="/products/:id" component={withProtection(ProductDetail)} />
       <Route path="/orders" component={withProtection(Orders)} />
-      <Route path="/wallet" component={withProtection(Wallet)} />
+      {/* <Route path="/wallet" component={withProtection(Wallet)} /> */}
       <Route path="/profile" component={withProtection(Profile)} />
       <Route
         path="/admin"
@@ -130,14 +130,14 @@ render(
           </AdminRoute>
         )}
       />
-      <Route
+      {/* <Route
         path="/admin/wallets"
         component={() => (
           <AdminRoute>
             <Wallets />
           </AdminRoute>
         )}
-      />
+      /> */}
       <Route
         path="/admin/users/:id"
         component={() => (
@@ -147,7 +147,7 @@ render(
         )}
       />
       <Route path="/login" component={Login} />
-      <Route path="/register" component={Register} />
+      {/* <Route path="/register" component={Register} /> */}
       <Route path="*" component={NotFound} />
     </Router>
   ),

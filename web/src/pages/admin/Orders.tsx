@@ -1,4 +1,11 @@
-import { Component, createSignal, onMount, For, Show, createMemo } from "solid-js";
+import {
+  Component,
+  createSignal,
+  onMount,
+  For,
+  Show,
+  createMemo,
+} from "solid-js";
 import { ordersApi, usersApi } from "../../utils/api";
 import { A } from "@solidjs/router";
 
@@ -88,7 +95,9 @@ const Orders: Component = () => {
     <div dir="rtl">
       <div class="flex items-center justify-between mb-6">
         <div>
-          <h2 class="text-3xl font-bold text-slate-800 mb-2">مدیریت سفارش‌ها</h2>
+          <h2 class="text-3xl font-bold text-slate-800 mb-2">
+            مدیریت سفارش‌ها
+          </h2>
           <p class="text-slate-600">مشاهده و مدیریت تمام سفارش‌های سیستم</p>
         </div>
         <button
@@ -110,7 +119,9 @@ const Orders: Component = () => {
               onInput={(e) => setSearch(e.currentTarget.value)}
               class="w-full px-4 py-2 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
-            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+              🔍
+            </span>
           </div>
           <select
             value={statusFilter()}
@@ -192,7 +203,9 @@ const Orders: Component = () => {
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                           <div class="text-sm text-slate-900">
-                            {order.User?.Username ?? order.User?.username ?? "نامشخص"}
+                            {order.User?.Username ??
+                              order.User?.username ??
+                              "نامشخص"}
                           </div>
                           <div class="text-xs text-slate-500">
                             {order.User?.Email ?? order.User?.email ?? ""}
@@ -200,14 +213,20 @@ const Orders: Component = () => {
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                           <div class="text-sm font-semibold text-slate-900">
-                            {Number(order.Total ?? order.total ?? 0).toLocaleString()} تومان
+                            {Number(
+                              order.Total ?? order.total ?? 0
+                            ).toLocaleString()}{" "}
+                            تومان
                           </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                           <select
                             value={order.Status ?? order.status ?? "pending"}
                             onChange={(e) =>
-                              updateStatus(order.ID ?? order.id, e.currentTarget.value)
+                              updateStatus(
+                                order.ID ?? order.id,
+                                e.currentTarget.value
+                              )
                             }
                             class={`text-xs font-medium px-3 py-1 rounded-full border-0 ${getStatusColor(
                               order.Status ?? order.status ?? "pending"
@@ -222,9 +241,13 @@ const Orders: Component = () => {
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                           {order.CreatedAt
-                            ? new Date(order.CreatedAt).toLocaleDateString("fa-IR")
+                            ? new Date(order.CreatedAt).toLocaleDateString(
+                                "fa-IR"
+                              )
                             : order.created_at
-                            ? new Date(order.created_at).toLocaleDateString("fa-IR")
+                            ? new Date(order.created_at).toLocaleDateString(
+                                "fa-IR"
+                              )
                             : "—"}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -264,7 +287,7 @@ const Orders: Component = () => {
             onClick={(e) => e.stopPropagation()}
             dir="rtl"
           >
-            <div class="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-xl">
+            <div class="sticky top-0 bg-linear-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-xl">
               <div class="flex items-center justify-between">
                 <h3 class="text-2xl font-bold">
                   جزئیات سفارش #{selectedOrder()?.ID ?? selectedOrder()?.id}
@@ -282,17 +305,23 @@ const Orders: Component = () => {
                 <div class="bg-slate-50 rounded-lg p-4">
                   <div class="text-sm text-slate-600 mb-1">کاربر</div>
                   <div class="font-semibold text-slate-900">
-                    {selectedOrder()?.User?.Username ?? selectedOrder()?.User?.username ?? "—"}
+                    {selectedOrder()?.User?.Username ??
+                      selectedOrder()?.User?.username ??
+                      "—"}
                   </div>
                   <div class="text-sm text-slate-600">
-                    {selectedOrder()?.User?.Email ?? selectedOrder()?.User?.email ?? ""}
+                    {selectedOrder()?.User?.Email ??
+                      selectedOrder()?.User?.email ??
+                      ""}
                   </div>
                 </div>
                 <div class="bg-slate-50 rounded-lg p-4">
                   <div class="text-sm text-slate-600 mb-1">وضعیت</div>
                   <div
                     class={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                      selectedOrder()?.Status ?? selectedOrder()?.status ?? "pending"
+                      selectedOrder()?.Status ??
+                        selectedOrder()?.status ??
+                        "pending"
                     )}`}
                   >
                     {selectedOrder()?.Status ?? selectedOrder()?.status ?? "—"}
@@ -311,9 +340,13 @@ const Orders: Component = () => {
                   <div class="text-sm text-slate-600 mb-1">تاریخ</div>
                   <div class="font-semibold text-slate-900">
                     {selectedOrder()?.CreatedAt
-                      ? new Date(selectedOrder()?.CreatedAt).toLocaleString("fa-IR")
+                      ? new Date(selectedOrder()?.CreatedAt).toLocaleString(
+                          "fa-IR"
+                        )
                       : selectedOrder()?.created_at
-                      ? new Date(selectedOrder()?.created_at).toLocaleString("fa-IR")
+                      ? new Date(selectedOrder()?.created_at).toLocaleString(
+                          "fa-IR"
+                        )
                       : "—"}
                   </div>
                 </div>
@@ -327,7 +360,9 @@ const Orders: Component = () => {
                       <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
                         <div class="flex-1">
                           <div class="font-semibold">
-                            {detail.Product?.Name ?? detail.product?.name ?? "محصول"}
+                            {detail.Product?.Name ??
+                              detail.product?.name ??
+                              "محصول"}
                           </div>
                           <div class="text-sm text-slate-600">
                             تعداد: {detail.Quantity ?? detail.quantity ?? 0}
@@ -335,7 +370,10 @@ const Orders: Component = () => {
                         </div>
                         <div class="text-left">
                           <div class="font-semibold">
-                            {Number(detail.Price ?? detail.price ?? 0).toLocaleString()} تومان
+                            {Number(
+                              detail.Price ?? detail.price ?? 0
+                            ).toLocaleString()}{" "}
+                            تومان
                           </div>
                           <div class="text-sm text-slate-600">
                             کل:{" "}

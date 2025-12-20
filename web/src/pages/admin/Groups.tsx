@@ -148,7 +148,9 @@ const Groups: Component = () => {
                       {g.Name ?? g.name}
                     </h3>
                     {g.Description ? (
-                      <p class="text-sm text-slate-600">{g.Description ?? g.description}</p>
+                      <p class="text-sm text-slate-600">
+                        {g.Description ?? g.description}
+                      </p>
                     ) : null}
                   </div>
                   <button
@@ -162,7 +164,9 @@ const Groups: Component = () => {
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Products Section */}
                   <div class="bg-slate-50 rounded-lg p-4">
-                    <h4 class="font-semibold mb-3 text-slate-900">محصولات گروه</h4>
+                    <h4 class="font-semibold mb-3 text-slate-900">
+                      محصولات گروه
+                    </h4>
                     <div class="space-y-2 mb-3">
                       <Show
                         when={(g.Products || []).length > 0}
@@ -177,7 +181,9 @@ const Groups: Component = () => {
                             <div class="flex items-center justify-between bg-white rounded px-3 py-2">
                               <span class="text-sm">{p.Name ?? p.name}</span>
                               <button
-                                onClick={() => removeProduct(g.ID ?? g.id, p.ID ?? p.id)}
+                                onClick={() =>
+                                  removeProduct(g.ID ?? g.id, p.ID ?? p.id)
+                                }
                                 class="text-red-500 hover:text-red-700 text-sm"
                               >
                                 ✕
@@ -201,7 +207,9 @@ const Groups: Component = () => {
                               )
                           )
                           .map((p: any) => (
-                            <option value={p.ID ?? p.id}>{p.Name ?? p.name}</option>
+                            <option value={p.ID ?? p.id}>
+                              {p.Name ?? p.name}
+                            </option>
                           ))}
                       </select>
                       <button
@@ -215,7 +223,9 @@ const Groups: Component = () => {
 
                   {/* Users Section */}
                   <div class="bg-slate-50 rounded-lg p-4">
-                    <h4 class="font-semibold mb-3 text-slate-900">کاربران گروه</h4>
+                    <h4 class="font-semibold mb-3 text-slate-900">
+                      کاربران گروه
+                    </h4>
                     <div class="space-y-2 mb-3">
                       <Show
                         when={(g.Users || []).length > 0}
@@ -228,9 +238,13 @@ const Groups: Component = () => {
                         <For each={g.Users || []}>
                           {(u: any) => (
                             <div class="flex items-center justify-between bg-white rounded px-3 py-2">
-                              <span class="text-sm">{u.Username ?? u.username}</span>
+                              <span class="text-sm">
+                                {u.Username ?? u.username}
+                              </span>
                               <button
-                                onClick={() => removeUser(g.ID ?? g.id, u.ID ?? u.id)}
+                                onClick={() =>
+                                  removeUser(g.ID ?? g.id, u.ID ?? u.id)
+                                }
                                 class="text-red-500 hover:text-red-700 text-sm"
                               >
                                 ✕
@@ -285,12 +299,14 @@ const Groups: Component = () => {
             onClick={(e) => e.stopPropagation()}
             dir="rtl"
           >
-            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-xl">
+            <div class="bg-linear-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-xl">
               <h3 class="text-xl font-bold">ایجاد گروه جدید</h3>
             </div>
             <div class="p-6 space-y-4">
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">نام گروه *</label>
+                <label class="block text-sm font-medium text-slate-700 mb-2">
+                  نام گروه *
+                </label>
                 <input
                   type="text"
                   placeholder="مثال: VIP"

@@ -99,15 +99,60 @@ const AdminDashboard: Component = () => {
   ];
 
   const quickLinks = [
-    { href: "/admin/users", label: "کاربران", icon: "👥", desc: "مدیریت کاربران" },
-    { href: "/admin/products", label: "محصولات", icon: "📦", desc: "فهرست و ویرایش" },
-    { href: "/admin/brands", label: "برندها", icon: "🏷️", desc: "مدیریت برندها" },
-    { href: "/admin/orders", label: "سفارش‌ها", icon: "🛒", desc: "پیگیری و وضعیت سفارش" },
-    { href: "/admin/categories", label: "دسته‌بندی‌ها", icon: "📋", desc: "مدیریت دسته‌ها" },
-    { href: "/admin/groups", label: "گروه‌ها", icon: "👤", desc: "مدیریت گروه‌ها و دسترسی محصول" },
-    { href: "/admin/wallets", label: "کیف‌پول", icon: "💳", desc: "مدیریت تراکنش‌ها" },
-    { href: "/admin/roles", label: "نقش‌ها", icon: "🛡️", desc: "مدیریت نقش‌ها" },
-    { href: "/admin/permissions", label: "دسترسی‌ها", icon: "🔑", desc: "مدیریت دسترسی‌ها" },
+    {
+      href: "/admin/users",
+      label: "کاربران",
+      icon: "👥",
+      desc: "مدیریت کاربران",
+    },
+    {
+      href: "/admin/products",
+      label: "محصولات",
+      icon: "📦",
+      desc: "فهرست و ویرایش",
+    },
+    {
+      href: "/admin/brands",
+      label: "برندها",
+      icon: "🏷️",
+      desc: "مدیریت برندها",
+    },
+    {
+      href: "/admin/orders",
+      label: "سفارش‌ها",
+      icon: "🛒",
+      desc: "پیگیری و وضعیت سفارش",
+    },
+    {
+      href: "/admin/categories",
+      label: "دسته‌بندی‌ها",
+      icon: "📋",
+      desc: "مدیریت دسته‌ها",
+    },
+    {
+      href: "/admin/groups",
+      label: "گروه‌ها",
+      icon: "👤",
+      desc: "مدیریت گروه‌ها و دسترسی محصول",
+    },
+    {
+      href: "/admin/wallets",
+      label: "کیف‌پول",
+      icon: "💳",
+      desc: "مدیریت تراکنش‌ها",
+    },
+    {
+      href: "/admin/roles",
+      label: "نقش‌ها",
+      icon: "🛡️",
+      desc: "مدیریت نقش‌ها",
+    },
+    {
+      href: "/admin/permissions",
+      label: "دسترسی‌ها",
+      icon: "🔑",
+      desc: "مدیریت دسترسی‌ها",
+    },
   ];
 
   return (
@@ -123,7 +168,7 @@ const AdminDashboard: Component = () => {
           {(card) => (
             <A
               href={card.href}
-              class={`bg-gradient-to-br ${card.color} rounded-xl shadow-lg p-6 text-white hover:shadow-xl transition-all transform hover:-translate-y-1`}
+              class={`bg-linear-to-br ${card.color} rounded-xl shadow-lg p-6 text-white hover:shadow-xl transition-all transform hover:-translate-y-1`}
             >
               <div class="flex items-center justify-between">
                 <div>
@@ -152,7 +197,9 @@ const AdminDashboard: Component = () => {
                     {link.icon}
                   </div>
                   <div class="flex-1">
-                    <div class="font-semibold text-slate-900 mb-1">{link.label}</div>
+                    <div class="font-semibold text-slate-900 mb-1">
+                      {link.label}
+                    </div>
                     <div class="text-xs text-slate-500">{link.desc}</div>
                   </div>
                 </div>
@@ -163,7 +210,7 @@ const AdminDashboard: Component = () => {
       </div>
 
       {/* Actions */}
-      <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-100">
+      <div class="bg-linear-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-100">
         <h3 class="text-lg font-semibold text-slate-900 mb-4">عملیات سریع</h3>
         <div class="flex flex-wrap gap-3">
           <A

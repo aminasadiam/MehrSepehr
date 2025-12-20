@@ -65,11 +65,11 @@ export default function Login() {
 
   return (
     <div
-      class="flex items-center justify-center min-h-screen relative overflow-hidden bg-gradient-to-br from-indigo-50 via-sky-50 to-white"
+      class="flex items-center justify-center min-h-screen relative overflow-hidden bg-linear-to-br from-indigo-50 via-sky-50 to-white"
       dir="rtl"
     >
       {/* Subtle overlay for depth */}
-      <div class="absolute inset-0 bg-gradient-to-b from-white/60 to-transparent pointer-events-none"></div>
+      <div class="absolute inset-0 bg-linear-to-b from-white/60 to-transparent pointer-events-none"></div>
 
       {/* Decorative SVG blobs */}
       <svg
@@ -130,7 +130,7 @@ export default function Login() {
               class="bg-red-50 border-2 border-red-200 text-red-700 px-5 py-4 rounded-2xl mb-6 flex items-start gap-3 shadow-sm"
               role="alert"
             >
-              <div class="flex-shrink-0 w-6 h-6 rounded-full bg-red-500 flex items-center justify-center mt-0.5">
+              <div class="shrink-0 w-6 h-6 rounded-full bg-red-500 flex items-center justify-center mt-0.5">
                 <i class="fa-solid fa-exclamation text-white text-xs"></i>
               </div>
               <div class="flex-1">
@@ -240,14 +240,14 @@ export default function Login() {
               ) : (
                 <>
                   <span>ورود</span>
-                  <i class="fa-solid fa-arrow-left group-hover:translate-x-[-4px] transition-transform"></i>
+                  <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
                 </>
               )}
             </button>
           </form>
 
           {/* Register Link */}
-          <div class="mt-8 pt-6 border-t border-slate-200 text-center">
+          {/* <div class="mt-8 pt-6 border-t border-slate-200 text-center">
             <p class="text-sm text-slate-600 mb-4">حساب کاربری ندارید؟</p>
             <A
               href="/register"
@@ -256,7 +256,7 @@ export default function Login() {
               <i class="fa-solid fa-user-plus"></i>
               ثبت نام
             </A>
-          </div>
+          </div> */}
         </div>
 
         {/* Back to Home */}

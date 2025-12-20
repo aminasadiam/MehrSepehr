@@ -116,7 +116,9 @@ const Brands: Component = () => {
           fallback={
             <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
               <div class="text-6xl mb-4">🏷️</div>
-              <h3 class="text-xl font-semibold text-slate-800 mb-2">برندی یافت نشد</h3>
+              <h3 class="text-xl font-semibold text-slate-800 mb-2">
+                برندی یافت نشد
+              </h3>
               <p class="text-slate-600 mb-4">هیچ برندی وجود ندارد</p>
               <button
                 onClick={() => setShowCreate(true)}
@@ -182,12 +184,14 @@ const Brands: Component = () => {
             onClick={(e) => e.stopPropagation()}
             dir="rtl"
           >
-            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-xl">
+            <div class="bg-linear-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-xl">
               <h3 class="text-xl font-bold">ایجاد برند جدید</h3>
             </div>
             <div class="p-6 space-y-4">
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">نام برند *</label>
+                <label class="block text-sm font-medium text-slate-700 mb-2">
+                  نام برند *
+                </label>
                 <input
                   type="text"
                   placeholder="مثال: سامسونگ"
@@ -199,19 +203,26 @@ const Brands: Component = () => {
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">توضیحات</label>
+                <label class="block text-sm font-medium text-slate-700 mb-2">
+                  توضیحات
+                </label>
                 <textarea
                   placeholder="توضیحات برند..."
                   value={newBrand().description}
                   onInput={(e) =>
-                    setNewBrand({ ...newBrand(), description: e.currentTarget.value })
+                    setNewBrand({
+                      ...newBrand(),
+                      description: e.currentTarget.value,
+                    })
                   }
                   rows={3}
                   class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">لوگو (URL)</label>
+                <label class="block text-sm font-medium text-slate-700 mb-2">
+                  لوگو (URL)
+                </label>
                 <input
                   type="text"
                   placeholder="آدرس تصویر لوگو"
@@ -255,12 +266,14 @@ const Brands: Component = () => {
             onClick={(e) => e.stopPropagation()}
             dir="rtl"
           >
-            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-xl">
+            <div class="bg-linear-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-xl">
               <h3 class="text-xl font-bold">ویرایش برند</h3>
             </div>
             <div class="p-6 space-y-4">
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">نام برند *</label>
+                <label class="block text-sm font-medium text-slate-700 mb-2">
+                  نام برند *
+                </label>
                 <input
                   type="text"
                   value={editing()?.name ?? ""}
@@ -271,18 +284,25 @@ const Brands: Component = () => {
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">توضیحات</label>
+                <label class="block text-sm font-medium text-slate-700 mb-2">
+                  توضیحات
+                </label>
                 <textarea
                   value={editing()?.description ?? ""}
                   onInput={(e) =>
-                    setEditing({ ...editing(), description: e.currentTarget.value })
+                    setEditing({
+                      ...editing(),
+                      description: e.currentTarget.value,
+                    })
                   }
                   rows={3}
                   class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">لوگو (URL)</label>
+                <label class="block text-sm font-medium text-slate-700 mb-2">
+                  لوگو (URL)
+                </label>
                 <input
                   type="text"
                   value={editing()?.logo ?? ""}
@@ -318,4 +338,3 @@ const Brands: Component = () => {
 };
 
 export default Brands;
-

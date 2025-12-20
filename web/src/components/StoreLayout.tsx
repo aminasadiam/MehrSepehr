@@ -25,7 +25,7 @@ const sidebarLinks = [
 ];
 
 const accountLinks = [
-  { href: "/wallet", label: "کیف پول", icon: "fa-solid fa-wallet" },
+  // { href: "/wallet", label: "کیف پول", icon: "fa-solid fa-wallet" },
   { href: "/profile", label: "پروفایل", icon: "fa-solid fa-circle-user" },
 ];
 
@@ -66,7 +66,7 @@ const footerLinks = {
   account: [
     { label: "حساب کاربری", href: "/profile" },
     { label: "سفارش‌های من", href: "/orders" },
-    { label: "کیف پول", href: "/wallet" },
+    // { label: "کیف پول", href: "/wallet" },
     { label: "ورود / ثبت نام", href: "/login" },
   ],
 };
@@ -131,6 +131,14 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
     }
   };
 
+  const avatarUrl = () => {
+    const avatar = auth.user()?.avatar;
+    if (!avatar) return null;
+
+    // اگر بک‌اند مسیر کامل ذخیره کرده
+    return avatar;
+  };
+
   onMount(() => {
     document.documentElement.lang = "fa";
     document.documentElement.dir = "rtl";
@@ -192,7 +200,7 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
               href="/"
               aria-label="بازگشت به صفحه اصلی"
             >
-              <div class="w-16 h-16 rounded-2xl bg-linear-to-br from-indigo-500 via-purple-600 to-pink-600 flex items-center justify-center shadow-xl group-hover:shadow-2xl group-hover:scale-105 transition-all duration-300">
+              <div class="w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl group-hover:shadow-2xl group-hover:scale-105 transition-all duration-300">
                 <img
                   class="w-12 h-12 object-contain"
                   src="/assets/images/logos.png"
@@ -411,8 +419,24 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
                     }
                   >
                     <div class="flex items-center gap-3 bg-linear-to-l from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-2xl px-5 py-3 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105">
-                      <div class="w-12 h-12 rounded-full bg-linear-to-br from-indigo-500 via-purple-600 to-pink-600 text-white flex items-center justify-center font-extrabold text-xl shadow-lg">
-                        {headerUserName()?.slice(0, 1).toUpperCase()}
+                      <div class="w-12 h-12 rounded-full overflow-hidden shadow-lg bg-slate-200 flex items-center justify-center">
+                        <Show
+                          when={avatarUrl()}
+                          fallback={
+                            <div class="w-full h-full bg-linear-to-br from-indigo-500 via-purple-600 to-pink-600 text-white flex items-center justify-center font-extrabold text-xl">
+                              {headerUserName()?.slice(0, 1).toUpperCase()}
+                            </div>
+                          }
+                        >
+                          {(src) => (
+                            <img
+                              src={src()}
+                              alt="تصویر پروفایل"
+                              class="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                          )}
+                        </Show>
                       </div>
                       <div class="hidden sm:block">
                         <p class="text-xs text-slate-500 font-bold">
@@ -490,7 +514,7 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
                         <li>
                           <a
                             href={link.href}
-                            class="text-slate-300 hover:text-white hover:translate-x-[-6px] transition-all duration-300 inline-flex items-center gap-2 font-medium"
+                            class="text-slate-300 hover:text-white hover:-translate-x-1.5 transition-all duration-300 inline-flex items-center gap-2 font-medium"
                           >
                             <i class="fa-solid fa-chevron-left text-xs opacity-0 group-hover:opacity-100"></i>
                             {link.label}
@@ -512,7 +536,7 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
                         <li>
                           <a
                             href={link.href}
-                            class="text-slate-300 hover:text-white hover:translate-x-[-6px] transition-all duration-300 inline-flex items-center gap-2 font-medium"
+                            class="text-slate-300 hover:text-white hover:-translate-x-1.5 transition-all duration-300 inline-flex items-center gap-2 font-medium"
                           >
                             <i class="fa-solid fa-chevron-left text-xs opacity-0 group-hover:opacity-100"></i>
                             {link.label}
@@ -534,7 +558,7 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
                         <li>
                           <a
                             href={link.href}
-                            class="text-slate-300 hover:text-white hover:translate-x-[-6px] transition-all duration-300 inline-flex items-center gap-2 font-medium"
+                            class="text-slate-300 hover:text-white hover:-translate-x-1.5 transition-all duration-300 inline-flex items-center gap-2 font-medium"
                           >
                             <i class="fa-solid fa-chevron-left text-xs opacity-0 group-hover:opacity-100"></i>
                             {link.label}

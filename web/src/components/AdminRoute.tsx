@@ -3,7 +3,7 @@ import { ParentComponent, Show, createEffect } from "solid-js";
 import { useAuth } from "../store/auth";
 import AdminLayout from "./AdminLayout";
 
-const AdminRoute: ParentComponent = (props) => {
+const AdminRoute: ParentComponent<{}> = (props) => {
   const auth = useAuth();
   const navigate = useNavigate();
 

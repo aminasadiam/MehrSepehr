@@ -82,7 +82,9 @@ const Roles: Component = () => {
       <div class="flex items-center justify-between mb-6">
         <div>
           <h2 class="text-3xl font-bold text-slate-800 mb-2">مدیریت نقش‌ها</h2>
-          <p class="text-slate-600">ایجاد و مدیریت نقش‌های کاربری و دسترسی‌ها</p>
+          <p class="text-slate-600">
+            ایجاد و مدیریت نقش‌های کاربری و دسترسی‌ها
+          </p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
@@ -114,7 +116,9 @@ const Roles: Component = () => {
                       {r.Name ?? r.name}
                     </h3>
                     {r.Description ?? r.description ? (
-                      <p class="text-sm text-slate-600">{r.Description ?? r.description}</p>
+                      <p class="text-sm text-slate-600">
+                        {r.Description ?? r.description}
+                      </p>
                     ) : null}
                   </div>
                   <button
@@ -126,12 +130,16 @@ const Roles: Component = () => {
                 </div>
 
                 <div class="mb-4">
-                  <div class="text-sm font-medium text-slate-700 mb-3">دسترسی‌های این نقش:</div>
+                  <div class="text-sm font-medium text-slate-700 mb-3">
+                    دسترسی‌های این نقش:
+                  </div>
                   <div class="flex flex-wrap gap-2">
                     <Show
                       when={(r.Permissions || []).length > 0}
                       fallback={
-                        <span class="text-sm text-slate-400">هیچ دسترسی‌ای ندارد</span>
+                        <span class="text-sm text-slate-400">
+                          هیچ دسترسی‌ای ندارد
+                        </span>
                       }
                     >
                       <For each={r.Permissions || []}>
@@ -139,7 +147,9 @@ const Roles: Component = () => {
                           <span class="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm">
                             {p.Name ?? p.name}
                             <button
-                              onClick={() => removePerm(r.ID ?? r.id, p.ID ?? p.id)}
+                              onClick={() =>
+                                removePerm(r.ID ?? r.id, p.ID ?? p.id)
+                              }
                               class="text-red-500 hover:text-red-700"
                             >
                               ✕
@@ -166,7 +176,9 @@ const Roles: Component = () => {
                             )
                         )
                         .map((p: any) => (
-                          <option value={p.ID ?? p.id}>{p.Name ?? p.name}</option>
+                          <option value={p.ID ?? p.id}>
+                            {p.Name ?? p.name}
+                          </option>
                         ))}
                     </select>
                     <button
@@ -202,12 +214,14 @@ const Roles: Component = () => {
             onClick={(e) => e.stopPropagation()}
             dir="rtl"
           >
-            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-xl">
+            <div class="bg-linear-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-xl">
               <h3 class="text-xl font-bold">ایجاد نقش جدید</h3>
             </div>
             <div class="p-6 space-y-4">
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">نام نقش *</label>
+                <label class="block text-sm font-medium text-slate-700 mb-2">
+                  نام نقش *
+                </label>
                 <input
                   type="text"
                   placeholder="مثال: مدیر"
@@ -217,7 +231,9 @@ const Roles: Component = () => {
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">توضیحات</label>
+                <label class="block text-sm font-medium text-slate-700 mb-2">
+                  توضیحات
+                </label>
                 <textarea
                   placeholder="توضیحات نقش..."
                   value={newDesc()}
