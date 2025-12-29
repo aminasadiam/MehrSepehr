@@ -163,8 +163,30 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProductHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+	// خواندن پارامترهای فیلتری از query string
+	filters := make(map[string]interface{})
+
+	// دسته‌بندی
+	if categoryID := r.URL.Query().Get("categoryId"); categoryID != "" {
+		if id, err := strconv.ParseUint(categoryID, 10, 32); err == nil {
+			filters["categoryId"] = uint(id)
+		}
+	}
+
+	// برند
+	if brandID := r.URL.Query().Get("brandId"); brandID != "" {
+		if id, err := strconv.ParseUint(brandID, 10, 32); err == nil {
+			filters["brandId"] = uint(id)
+		}
+	}
+
+	// جستجو
+	if search := r.URL.Query().Get("search"); search != "" {
+		filters["search"] = search
+	}
+
 	var products []models.Product
-	if err := h.productRepo.GetAll(&products); err != nil {
+	if err := h.productRepo.GetAll(&products, filters); err != nil {
 		utils.ErrorResponse(w, "Failed to fetch products", http.StatusInternalServerError)
 		return
 	}
@@ -351,7 +373,7 @@ func (h *ProductHandler) UploadImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	imageURL := "/uploads/products/" + filename
+	imageURL := "http://localhost:8080/assets/products/" + filename
 	isPrimary := r.FormValue("is_primary") == "true"
 	order, _ := strconv.Atoi(r.FormValue("order"))
 

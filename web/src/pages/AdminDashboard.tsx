@@ -1,4 +1,4 @@
-import { Component, createSignal, onMount, For } from "solid-js";
+import { Component, createSignal, onMount, For, Show } from "solid-js";
 import { A } from "@solidjs/router";
 import { usersApi, productsApi, ordersApi, categoriesApi } from "../utils/api";
 
@@ -23,17 +23,17 @@ const AdminDashboard: Component = () => {
         categoriesApi.getAll(),
       ]);
 
-      const users = (uRes.data as any) || [];
-      const products = (pRes.data as any) || [];
-      const orders = (oRes.data as any) || [];
-      const categories = (cRes.data as any) || [];
+      const users = Array.isArray(uRes.data) ? uRes.data : [];
+      const products = Array.isArray(pRes.data) ? pRes.data : [];
+      const orders = Array.isArray(oRes.data) ? oRes.data : [];
+      const categories = Array.isArray(cRes.data) ? cRes.data : [];
 
       const totalRevenue = orders.reduce(
-        (sum: number, o: any) => sum + Number(o.Total ?? o.total ?? 0),
+        (sum: number, o: any) => sum + Number(o.total ?? 0),
         0
       );
       const pendingOrders = orders.filter(
-        (o: any) => (o.Status ?? o.status) === "pending"
+        (o: any) => o.status === "pending"
       ).length;
 
       setStats({
@@ -44,8 +44,8 @@ const AdminDashboard: Component = () => {
         totalRevenue,
         pendingOrders,
       });
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -53,160 +53,63 @@ const AdminDashboard: Component = () => {
 
   onMount(loadStats);
 
-  const statCards = [
+  const statsData = [
+    { icon: "fa-users", label: "کاربران", value: () => stats().users },
     {
-      title: "کاربران",
-      value: stats().users,
-      icon: "👥",
-      color: "from-indigo-500 to-indigo-600",
-      href: "/admin/users",
-    },
-    {
-      title: "محصولات",
-      value: stats().products,
-      icon: "📦",
-      color: "from-amber-500 to-amber-600",
-      href: "/admin/products",
-    },
-    {
-      title: "سفارش‌ها",
-      value: stats().orders,
-      icon: "🛒",
-      color: "from-green-500 to-green-600",
-      href: "/admin/orders",
-    },
-    {
-      title: "دسته‌بندی‌ها",
-      value: stats().categories,
-      icon: "📋",
-      color: "from-rose-500 to-rose-600",
-      href: "/admin/categories",
-    },
-    {
-      title: "درآمد کل",
-      value: `${stats().totalRevenue.toLocaleString()} تومان`,
-      icon: "💰",
-      color: "from-emerald-500 to-emerald-600",
-      href: "/admin/orders",
-    },
-    {
-      title: "سفارش‌های در انتظار",
-      value: stats().pendingOrders,
-      icon: "⏳",
-      color: "from-yellow-500 to-yellow-600",
-      href: "/admin/orders",
-    },
-  ];
-
-  const quickLinks = [
-    {
-      href: "/admin/users",
-      label: "کاربران",
-      icon: "👥",
-      desc: "مدیریت کاربران",
-    },
-    {
-      href: "/admin/products",
+      icon: "fa-boxes-stacked",
       label: "محصولات",
-      icon: "📦",
-      desc: "فهرست و ویرایش",
+      value: () => stats().products,
+    },
+    { icon: "fa-shopping-cart", label: "سفارشات", value: () => stats().orders },
+    { icon: "fa-tags", label: "دسته‌بندی‌ها", value: () => stats().categories },
+    {
+      icon: "fa-dollar-sign",
+      label: "درآمد کل",
+      value: () =>
+        Intl.NumberFormat("fa-IR").format(stats().totalRevenue) + " تومان",
     },
     {
-      href: "/admin/brands",
-      label: "برندها",
-      icon: "🏷️",
-      desc: "مدیریت برندها",
-    },
-    {
-      href: "/admin/orders",
-      label: "سفارش‌ها",
-      icon: "🛒",
-      desc: "پیگیری و وضعیت سفارش",
-    },
-    {
-      href: "/admin/categories",
-      label: "دسته‌بندی‌ها",
-      icon: "📋",
-      desc: "مدیریت دسته‌ها",
-    },
-    {
-      href: "/admin/groups",
-      label: "گروه‌ها",
-      icon: "👤",
-      desc: "مدیریت گروه‌ها و دسترسی محصول",
-    },
-    {
-      href: "/admin/wallets",
-      label: "کیف‌پول",
-      icon: "💳",
-      desc: "مدیریت تراکنش‌ها",
-    },
-    {
-      href: "/admin/roles",
-      label: "نقش‌ها",
-      icon: "🛡️",
-      desc: "مدیریت نقش‌ها",
-    },
-    {
-      href: "/admin/permissions",
-      label: "دسترسی‌ها",
-      icon: "🔑",
-      desc: "مدیریت دسترسی‌ها",
+      icon: "fa-clock",
+      label: "سفارشات در انتظار",
+      value: () => stats().pendingOrders,
     },
   ];
 
   return (
-    <div dir="rtl">
-      <div class="mb-8">
-        <h1 class="text-4xl font-bold text-slate-900 mb-2">داشبورد مدیریت</h1>
-        <p class="text-slate-600">خوش آمدید به پنل مدیریت مهر سپهر</p>
+    <div class="max-w-7xl mx-auto px-4 py-8 space-y-8">
+      <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-slate-900">داشبورد مدیریت</h1>
+        <button class="btn btn-outline" onClick={loadStats}>
+          بروزرسانی <i class="fa-solid fa-rotate-left text-sm"></i>
+        </button>
       </div>
 
-      {/* Stats Cards */}
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <For each={statCards}>
-          {(card) => (
-            <A
-              href={card.href}
-              class={`bg-linear-to-br ${card.color} rounded-xl shadow-lg p-6 text-white hover:shadow-xl transition-all transform hover:-translate-y-1`}
-            >
-              <div class="flex items-center justify-between">
+      {/* Stats Grid */}
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Show
+          when={!loading()}
+          fallback={
+            <For each={Array(6)}>
+              {() => <div class="stats-card animate-pulse"></div>}
+            </For>
+          }
+        >
+          <For each={statsData}>
+            {(item) => (
+              <div class="stats-card">
+                <div class="stats-icon">
+                  <i class={`fa-solid ${item.icon} text-2xl`}></i>
+                </div>
                 <div>
-                  <div class="text-sm opacity-90 mb-1">{card.title}</div>
-                  <div class="text-3xl font-bold">{card.value}</div>
+                  <p class="text-sm text-slate-500">{item.label}</p>
+                  <h3 class="text-2xl font-bold text-slate-900">
+                    {item.value()}
+                  </h3>
                 </div>
-                <div class="text-5xl opacity-80">{card.icon}</div>
               </div>
-            </A>
-          )}
-        </For>
-      </div>
-
-      {/* Quick Links */}
-      <div class="mb-6">
-        <h2 class="text-2xl font-bold text-slate-800 mb-4">دسترسی سریع</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <For each={quickLinks}>
-            {(link) => (
-              <A
-                href={link.href}
-                class="group block rounded-lg border border-slate-200 p-6 bg-white shadow-sm hover:shadow-md transition-all hover:border-indigo-300"
-              >
-                <div class="flex items-center gap-4">
-                  <div class="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-2xl group-hover:bg-indigo-100 transition-colors">
-                    {link.icon}
-                  </div>
-                  <div class="flex-1">
-                    <div class="font-semibold text-slate-900 mb-1">
-                      {link.label}
-                    </div>
-                    <div class="text-xs text-slate-500">{link.desc}</div>
-                  </div>
-                </div>
-              </A>
             )}
           </For>
-        </div>
+        </Show>
       </div>
 
       {/* Actions */}

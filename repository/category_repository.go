@@ -43,10 +43,12 @@ func (r *CategoryRepository) GetBySlug(slug string) (*models.Category, error) {
 	return &category, err
 }
 
-func (r *CategoryRepository) GetAllWithChildren(categories *[]models.Category) error {
-	return r.db.Preload("Children").Preload("Products").Find(categories).Error
-}
-
 func (r *CategoryRepository) GetByIDWithChildren(id uint, category *models.Category) error {
 	return r.db.Preload("Children").Preload("Products").First(category, id).Error
+}
+
+func (r *CategoryRepository) GetAllWithChildren(categories *[]models.Category) error {
+	return r.db.Preload("Children", func(db *gorm.DB) *gorm.DB {
+		return db.Order("name")
+	}).Preload("Products").Order("name").Find(categories).Error
 }

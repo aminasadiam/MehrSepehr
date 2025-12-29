@@ -46,17 +46,27 @@ func (r *UserRepository) Update(model *models.User) error {
 }
 
 func (r *UserRepository) Delete(id uint) error {
+	// remove associations first
+	if err := r.db.Table("user_roles").Where("user_id = ?", id).Delete(nil).Error; err != nil {
+		return err
+	}
+	if err := r.db.Table("user_groups").Where("user_id = ?", id).Delete(nil).Error; err != nil {
+		return err
+	}
 	return r.db.Delete(&models.User{}, id).Error
 }
 
 func (r *UserRepository) AddRole(userID, roleID uint) error {
-	return r.db.Model(&models.User{Model: gorm.Model{ID: userID}}).
-		Association("Roles").
-		Append(&models.Role{Model: gorm.Model{ID: roleID}})
+	// ensure both exist
+	if err := r.db.Where("id = ?", userID).First(&models.User{}).Error; err != nil {
+		return err
+	}
+	if err := r.db.Where("id = ?", roleID).First(&models.Role{}).Error; err != nil {
+		return err
+	}
+	return r.db.Table("user_roles").Create(map[string]interface{}{"user_id": userID, "role_id": roleID}).Error
 }
 
 func (r *UserRepository) RemoveRole(userID, roleID uint) error {
-	return r.db.Model(&models.User{Model: gorm.Model{ID: userID}}).
-		Association("Roles").
-		Delete(&models.Role{Model: gorm.Model{ID: roleID}})
+	return r.db.Table("user_roles").Where("user_id = ? AND role_id = ?", userID, roleID).Delete(nil).Error
 }

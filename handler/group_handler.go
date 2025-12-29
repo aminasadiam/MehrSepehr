@@ -82,6 +82,13 @@ func (h *GroupHandler) AddProduct(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorResponse(w, "Invalid group id", http.StatusBadRequest)
 		return
 	}
+
+	// Verify group exists
+	if _, err := h.repo.GetByID(uint(groupID)); err != nil {
+		utils.ErrorResponse(w, "Group not found", http.StatusNotFound)
+		return
+	}
+
 	var body struct {
 		ProductID uint `json:"product_id"`
 	}
@@ -94,7 +101,7 @@ func (h *GroupHandler) AddProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.repo.AddProduct(uint(groupID), body.ProductID); err != nil {
-		utils.ErrorResponse(w, "Failed to add product to group", http.StatusInternalServerError)
+		utils.ErrorResponse(w, "Failed to add product to group: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	utils.SuccessResponse(w, "Product added to group", nil, http.StatusOK)
@@ -108,13 +115,20 @@ func (h *GroupHandler) RemoveProduct(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorResponse(w, "Invalid group id", http.StatusBadRequest)
 		return
 	}
+
+	// Verify group exists
+	if _, err := h.repo.GetByID(uint(gid)); err != nil {
+		utils.ErrorResponse(w, "Group not found", http.StatusNotFound)
+		return
+	}
+
 	pid, err := strconv.ParseUint(pidStr, 10, 32)
 	if err != nil {
 		utils.ErrorResponse(w, "Invalid product id", http.StatusBadRequest)
 		return
 	}
 	if err := h.repo.RemoveProduct(uint(gid), uint(pid)); err != nil {
-		utils.ErrorResponse(w, "Failed to remove product from group", http.StatusInternalServerError)
+		utils.ErrorResponse(w, "Failed to remove product from group: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	utils.SuccessResponse(w, "Product removed from group", nil, http.StatusOK)
@@ -128,6 +142,13 @@ func (h *GroupHandler) AddUser(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorResponse(w, "Invalid group id", http.StatusBadRequest)
 		return
 	}
+
+	// Verify group exists
+	if _, err := h.repo.GetByID(uint(groupID)); err != nil {
+		utils.ErrorResponse(w, "Group not found", http.StatusNotFound)
+		return
+	}
+
 	var body struct {
 		UserID uint `json:"user_id"`
 	}
@@ -140,7 +161,7 @@ func (h *GroupHandler) AddUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.repo.AddUser(uint(groupID), body.UserID); err != nil {
-		utils.ErrorResponse(w, "Failed to add user to group", http.StatusInternalServerError)
+		utils.ErrorResponse(w, "Failed to add user to group: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	utils.SuccessResponse(w, "User added to group", nil, http.StatusOK)
@@ -154,13 +175,20 @@ func (h *GroupHandler) RemoveUser(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorResponse(w, "Invalid group id", http.StatusBadRequest)
 		return
 	}
+
+	// Verify group exists
+	if _, err := h.repo.GetByID(uint(gid)); err != nil {
+		utils.ErrorResponse(w, "Group not found", http.StatusNotFound)
+		return
+	}
+
 	uid, err := strconv.ParseUint(uidStr, 10, 32)
 	if err != nil {
 		utils.ErrorResponse(w, "Invalid user id", http.StatusBadRequest)
 		return
 	}
 	if err := h.repo.RemoveUser(uint(gid), uint(uid)); err != nil {
-		utils.ErrorResponse(w, "Failed to remove user from group", http.StatusInternalServerError)
+		utils.ErrorResponse(w, "Failed to remove user from group: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	utils.SuccessResponse(w, "User removed from group", nil, http.StatusOK)

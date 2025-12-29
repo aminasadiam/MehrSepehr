@@ -1,4 +1,4 @@
-import { Show, createEffect, createSignal } from "solid-js";
+import { Show, createEffect, createSignal, createMemo } from "solid-js";
 import { usersApi } from "../utils/api";
 import { useAuth } from "../store/auth";
 
@@ -9,15 +9,25 @@ const Profile = () => {
     email: "",
     phone: "",
     avatar: "",
+    password: "",
   });
-  const [isSavingPassword, setIsSavingPassword] = createSignal(false);
+  const [isSaving, setIsSaving] = createSignal(false);
+  const [uploading, setUploading] = createSignal(false);
+  const [preview, setPreview] = createSignal<string | null>(null);
   const [message, setMessage] = createSignal<{
     type: "success" | "error";
     text: string;
   } | null>(null);
-  const [isSaving, setIsSaving] = createSignal(false);
-  const [uploading, setUploading] = createSignal(false);
-  const [preview, setPreview] = createSignal<string | null>(null);
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  const isValid = createMemo(() => {
+    const f = form();
+    if (!f.username || f.username.trim().length < 3) return false;
+    if (!emailRegex.test(f.email)) return false;
+    if (f.phone && !/^\d{10,11}$/.test(f.phone)) return false;
+    return true;
+  });
 
   createEffect(() => {
     const current = auth.user();
@@ -27,6 +37,7 @@ const Profile = () => {
         email: current.email,
         phone: current.phone ?? "",
         avatar: current.avatar ?? "",
+        password: "",
       });
       setPreview(current.avatar ?? null);
     }
@@ -42,117 +53,108 @@ const Profile = () => {
     // show local preview
     setPreview(URL.createObjectURL(file));
 
-    const form = new FormData();
-    form.append("avatar", file);
+    const formData = new FormData();
+    formData.append("avatar", file);
     try {
       setUploading(true);
-      await usersApi.uploadAvatar(current.id, form);
+      await usersApi.uploadAvatar(current.id, formData);
       await auth.refreshProfile();
-      setMessage({ type: "success", text: "تصویر پروفایل بارگذاری شد." });
-    } catch (err: any) {
-      console.error(err);
-      setMessage({
-        type: "error",
-        text: err?.message || "بارگذاری با خطا مواجه شد.",
-      });
+      setMessage({ type: "success", text: "آواتار بروزرسانی شد." });
+    } catch (err) {
+      setMessage({ type: "error", text: "خطا در آپلود آواتار." });
+      setPreview(current.avatar ?? null);
     } finally {
       setUploading(false);
     }
   };
 
-  const handleSubmit = async (event: Event) => {
-    event.preventDefault();
+  const handleRemoveAvatar = async () => {
+    const current = auth.user();
+    if (!current) return;
+    setPreview(current.avatar ?? null);
+    setForm({ ...form(), avatar: "" });
+  };
+
+  const handleSubmit = async (e: Event) => {
+    e.preventDefault();
+    setMessage(null);
+    if (!isValid()) {
+      setMessage({ type: "error", text: "لطفا فیلدها را صحیح پر کنید." });
+      return;
+    }
+    setIsSaving(true);
     const current = auth.user();
     if (!current) return;
 
     try {
-      setIsSaving(true);
-      setMessage(null);
-      const payload: any = {
-        username: form().username,
-        email: form().email,
-      };
-      if (form().phone !== undefined) payload.phone = form().phone;
-      if (form().avatar !== undefined) payload.avatar = form().avatar;
-      if ((form() as any).password) payload.password = (form() as any).password;
-
-      await usersApi.update(current.id, payload);
-      setMessage({ type: "success", text: "اطلاعات حساب کاربری ذخیره شد." });
+      await usersApi.update(current.id, form());
       await auth.refreshProfile();
-    } catch (error: any) {
-      setMessage({
-        type: "error",
-        text: error?.message || "ذخیره اطلاعات با خطا مواجه شد.",
-      });
+      setForm({ ...form(), password: "" });
+      setMessage({ type: "success", text: "پروفایل بروزرسانی شد." });
+    } catch (err) {
+      setMessage({ type: "error", text: "خطا در بروزرسانی." });
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-10 py-10 space-y-8">
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p class="section-kicker">اطلاعات حساب</p>
-          <h1 class="text-3xl font-semibold text-slate-900">پروفایل کاربری</h1>
-        </div>
-        <button
-          class="btn btn-soft"
-          type="button"
-          onClick={() => auth.logout()}
-        >
-          خروج از حساب
-        </button>
+    <section class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-10 py-10 space-y-8">
+      <div>
+        <p class="section-kicker">اطلاعات شخصی</p>
+        <h1 class="text-3xl font-semibold text-slate-900">پروفایل من</h1>
       </div>
 
-      <Show
-        when={auth.user()}
-        fallback={
-          <div class="rounded-3xl border border-slate-200 bg-white px-6 py-10 text-center text-slate-500">
-            برای مشاهده پروفایل ابتدا وارد حساب شوید.
-          </div>
-        }
-      >
-        <form
-          class="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm space-y-5"
-          onSubmit={handleSubmit}
-        >
-          <div>
-            <label
-              class="block text-sm font-semibold text-slate-600"
-              for="username"
-            >
-              نام کاربری
-            </label>
-            <input
-              id="username"
-              type="text"
-              value={form().username}
-              onInput={(event) =>
-                setForm({ ...form(), username: event.currentTarget.value })
-              }
-              class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              required
-            />
-          </div>
-
-          <div>
-            <label
-              class="block text-sm font-semibold text-slate-600"
-              for="email"
-            >
-              ایمیل
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={form().email}
-              onInput={(event) =>
-                setForm({ ...form(), email: event.currentTarget.value })
-              }
-              class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              required
-            />
+      <Show when={auth.user()} fallback={<p>در حال بارگیری...</p>}>
+        <form class="space-y-6" onSubmit={handleSubmit}>
+          <div class="grid sm:grid-cols-2 gap-6">
+            <div>
+              <label
+                class="block text-sm font-semibold text-slate-600"
+                for="username"
+              >
+                نام کاربری
+              </label>
+              <input
+                id="username"
+                type="text"
+                value={form().username}
+                onInput={(e) =>
+                  setForm({ ...form(), username: e.currentTarget.value })
+                }
+                class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+              <Show
+                when={
+                  form().username.trim().length > 0 &&
+                  form().username.trim().length < 3
+                }
+              >
+                <p class="text-xs text-red-600 mt-2">
+                  نام کاربری باید حداقل ۳ کاراکتر باشد.
+                </p>
+              </Show>
+            </div>
+            <div>
+              <label
+                class="block text-sm font-semibold text-slate-600"
+                for="email"
+              >
+                ایمیل
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={form().email}
+                onInput={(e) =>
+                  setForm({ ...form(), email: e.currentTarget.value })
+                }
+                class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+              <Show when={form().email && !emailRegex.test(form().email)}>
+                <p class="text-xs text-red-600 mt-2">فرمت ایمیل معتبر نیست.</p>
+              </Show>
+            </div>
           </div>
 
           <div>
@@ -164,44 +166,51 @@ const Profile = () => {
             </label>
             <input
               id="phone"
-              type="text"
+              type="tel"
               value={form().phone}
-              onInput={(event) =>
-                setForm({ ...form(), phone: event.currentTarget.value })
+              onInput={(e) =>
+                setForm({ ...form(), phone: e.currentTarget.value })
               }
               class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              placeholder="09123456789"
             />
           </div>
 
+          {/* Avatar */}
           <div>
-            <label
-              class="block text-sm font-semibold text-slate-600"
-              for="avatar"
-            >
+            <label class="block text-sm font-semibold text-slate-600 mb-2">
               تصویر پروفایل
             </label>
-            <div class="flex items-center gap-3">
-              <div class="w-20 h-20 rounded-full overflow-hidden bg-slate-100">
-                <Show when={preview()}>
-                  <img
-                    src={preview()!}
-                    alt="avatar"
-                    class="w-full h-full object-cover"
-                  />
-                </Show>
-              </div>
-              <div class="flex-1">
+            <div class="flex items-center gap-4">
+              <Show
+                when={preview()}
+                fallback={<div class="h-24 w-24 rounded-full bg-slate-200" />}
+              >
+                <img
+                  src={preview()!}
+                  alt="آواتار"
+                  class="h-24 w-24 rounded-full object-cover border-2 border-slate-200"
+                />
+              </Show>
+              <label class="cursor-pointer bg-slate-100 hover:bg-indigo-100 text-slate-700 hover:text-indigo-600 px-4 py-2 rounded-xl font-medium transition-all">
+                انتخاب تصویر
                 <input
                   type="file"
                   accept="image/*"
+                  class="hidden"
                   onChange={handleAvatarChange}
                 />
-                <div class="text-xs text-slate-500 mt-1">
-                  {uploading()
-                    ? "در حال آپلود..."
-                    : "آپلود یک تصویر برای پروفایل"}
-                </div>
-              </div>
+              </label>
+              <button
+                type="button"
+                class="text-sm text-red-600 hover:underline"
+                onClick={handleRemoveAvatar}
+              >
+                حذف تصویر
+              </button>
+              <Show when={uploading()}>
+                <i class="fa-solid fa-spinner fa-spin text-indigo-600"></i>
+              </Show>
             </div>
           </div>
 
@@ -223,9 +232,11 @@ const Profile = () => {
           </div>
 
           <button
-            class="btn btn-primary w-full"
+            class={`btn btn-primary w-full ${
+              !isValid() ? "opacity-60 cursor-not-allowed" : ""
+            }`}
             type="submit"
-            disabled={isSaving()}
+            disabled={isSaving() || !isValid()}
           >
             {isSaving() ? "در حال ذخیره..." : "ذخیره تغییرات"}
           </button>

@@ -31,17 +31,39 @@ func (r *ProductRepository) GetByID(id uint, product *models.Product) error {
 		First(product, id).Error
 }
 
-// GetAll با Preload کامل
-func (r *ProductRepository) GetAll(products *[]models.Product) error {
-	return r.db.Preload("Category").
+// GetAll با Preload کامل و فیلترهای اختیاری
+func (r *ProductRepository) GetAll(products *[]models.Product, filters ...map[string]interface{}) error {
+	query := r.db.Preload("Category").
 		Preload("Brand").
 		Preload("Images").
 		Preload("Sizes").
 		Preload("Colors").
 		Preload("Groups").
 		Preload("Prices").
-		Order("created_at DESC").
-		Find(products).Error
+		Order("created_at DESC")
+
+	// اعمال فیلترها اگر مورد نیاز باشد
+	if len(filters) > 0 && filters[0] != nil {
+		filterMap := filters[0]
+
+		// فیلتر براساس دسته‌بندی
+		if categoryID, ok := filterMap["categoryId"]; ok && categoryID != nil {
+			query = query.Where("category_id = ?", categoryID)
+		}
+
+		// فیلتر براساس برند
+		if brandID, ok := filterMap["brandId"]; ok && brandID != nil {
+			query = query.Where("brand_id = ?", brandID)
+		}
+
+		// جستجو براساس نام یا SKU
+		if search, ok := filterMap["search"]; ok && search != nil {
+			searchTerm := "%" + strings.ToLower(search.(string)) + "%"
+			query = query.Where("LOWER(name) LIKE ? OR LOWER(sku) LIKE ?", searchTerm, searchTerm)
+		}
+	}
+
+	return query.Find(products).Error
 }
 
 func (r *ProductRepository) Update(model *models.Product) error {

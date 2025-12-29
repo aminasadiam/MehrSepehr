@@ -64,6 +64,8 @@ func Serve(cfg *config.Configuration) error {
 	mux.Handle("POST /api/users/{id}/roles", authMiddleware(adminMiddleware(http.HandlerFunc(userHandler.AddRole))))
 	mux.Handle("DELETE /api/users/{id}/roles/{roleId}", authMiddleware(adminMiddleware(http.HandlerFunc(userHandler.RemoveRole))))
 
+	mux.Handle("POST /api/users/{id}/avatar", authMiddleware(http.HandlerFunc(userHandler.UploadAvatar)))
+
 	// --------------------
 	// Product routes (authenticated, admin for create/update/delete)
 	// --------------------
@@ -79,12 +81,12 @@ func Serve(cfg *config.Configuration) error {
 	// --------------------
 	// Category routes
 	// --------------------
-	mux.Handle("GET /api/categories", authMiddleware(http.HandlerFunc(categoryHandler.GetAll)))
-	mux.Handle("GET /api/categories/{id}", authMiddleware(http.HandlerFunc(categoryHandler.GetByID)))
-	mux.Handle("GET /api/categories/slug/{slug}", authMiddleware(http.HandlerFunc(categoryHandler.GetBySlug)))
-	mux.Handle("POST /api/categories", authMiddleware(adminMiddleware(http.HandlerFunc(categoryHandler.Create))))
-	mux.Handle("PUT /api/categories/{id}", authMiddleware(adminMiddleware(http.HandlerFunc(categoryHandler.Update))))
-	mux.Handle("DELETE /api/categories/{id}", authMiddleware(adminMiddleware(http.HandlerFunc(categoryHandler.Delete))))
+	mux.Handle("GET /api/admin/categories", http.HandlerFunc(categoryHandler.GetAll))
+	mux.Handle("GET /api/admin/categories/{id}", authMiddleware(http.HandlerFunc(categoryHandler.GetByID)))
+	mux.Handle("GET /api/admin/categories/slug/{slug}", authMiddleware(http.HandlerFunc(categoryHandler.GetBySlug)))
+	mux.Handle("POST /api/admin/categories", authMiddleware(adminMiddleware(http.HandlerFunc(categoryHandler.Create))))
+	mux.Handle("PUT /api/admin/categories/{id}", authMiddleware(adminMiddleware(http.HandlerFunc(categoryHandler.Update))))
+	mux.Handle("DELETE /api/admin/categories/{id}", authMiddleware(adminMiddleware(http.HandlerFunc(categoryHandler.Delete))))
 
 	// --------------------
 	// Brand routes
@@ -161,6 +163,26 @@ func Serve(cfg *config.Configuration) error {
 				case ".png", ".jpg", ".jpeg", ".webp":
 					w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
 					avatarFS.ServeHTTP(w, r)
+				default:
+					http.NotFound(w, r)
+				}
+			}),
+		),
+	)
+
+	// --------------------
+	// Product images static assets
+	// --------------------
+	productImagesFS := http.FileServer(http.Dir("./uploads/products"))
+
+	mux.Handle("GET /assets/products/",
+		http.StripPrefix("/assets/products/",
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				ext := strings.ToLower(filepath.Ext(r.URL.Path))
+				switch ext {
+				case ".png", ".jpg", ".jpeg", ".webp", ".gif", ".avif":
+					w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+					productImagesFS.ServeHTTP(w, r)
 				default:
 					http.NotFound(w, r)
 				}

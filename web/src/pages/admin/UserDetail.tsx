@@ -18,7 +18,7 @@ const UserDetail: Component = () => {
     try {
       const [uRes, rRes, allOrders] = await Promise.all([
         usersApi.getById(id),
-        adminApi.getRoles(),
+        adminApi.roles.getAll(),
         ordersApi.adminGetAll(),
       ]);
       const u = (uRes.data as any) || null;

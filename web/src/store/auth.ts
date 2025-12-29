@@ -1,3 +1,4 @@
+// auth.ts اصلاح‌شده
 import { createSignal } from "solid-js";
 import { ApiError, authApi } from "../utils/api";
 
@@ -10,24 +11,19 @@ export interface User {
 }
 
 export type Role = { id?: number; name: string };
+export type Group = { id?: number; name: string };
 
 const [user, setUser] = createSignal<User | null>(null);
 const [roles, setRoles] = createSignal<Role[]>([]);
+const [groups, setGroups] = createSignal<Group[]>([]);
 const [isAuthenticated, setIsAuthenticated] = createSignal<boolean>(false);
 const [isProfileLoading, setIsProfileLoading] = createSignal<boolean>(false);
 
-// Check if user is logged in on init
-const token = localStorage.getItem("token");
-if (token) {
-  setIsAuthenticated(true);
-  refreshProfile();
-}
-
 async function refreshProfile() {
+  setIsProfileLoading(true);
   try {
-    setIsProfileLoading(true);
     const res = await authApi.getProfile();
-    if (res.data) {
+    if (res.success && res.data) {
       const data = res.data as any;
       setUser({
         id: data.id ?? data.ID,
@@ -36,120 +32,98 @@ async function refreshProfile() {
         phone: data.phone ?? data.Phone,
         avatar: data.avatar ?? data.Avatar,
       });
-      // capture roles if present
-      if (data.roles) {
+      if (data.roles || data.Roles) {
+        const rawRoles = data.roles ?? data.Roles;
         setRoles(
-          (data.roles as any[]).map((r) => ({
-            id: r.ID ?? r.id,
+          rawRoles.map((r: any) => ({
+            id: r.id ?? r.ID,
             name: r.name ?? r.Name,
           }))
         );
       } else {
         setRoles([]);
       }
+      if (data.groups || data.Groups) {
+        const rawGroups = data.groups ?? data.Groups;
+        setGroups(
+          rawGroups.map((g: any) => ({
+            id: g.id ?? g.ID,
+            name: g.name ?? g.Name,
+          }))
+        );
+      } else {
+        setGroups([]);
+      }
       setIsAuthenticated(true);
+    } else {
+      logout();
     }
   } catch (error) {
-    if (error instanceof ApiError && error.status === 401) {
-      localStorage.removeItem("token");
-    }
-    setUser(null);
-    setRoles([]);
-    setIsAuthenticated(false);
+    logout();
   } finally {
     setIsProfileLoading(false);
   }
 }
 
-export const useAuth = () => {
-  const login = async (email: string, password: string) => {
-    try {
-      const response = await authApi.login(email, password);
-      if (response.data && (response.data as any).token) {
-        const token = (response.data as any).token;
-        localStorage.setItem("token", token);
-        const u = (response.data as any).user;
-        setUser({
-          id: u.id ?? u.ID,
-          username: u.username ?? u.Username,
-          email: u.email ?? u.Email,
-          phone: u.phone ?? u.Phone,
-          avatar: u.avatar ?? u.Avatar,
-        });
-        if (u && u.roles) {
-          setRoles(
-            (u.roles as any).map((r: any) => ({
-              id: r.ID ?? r.id,
-              name: r.name ?? r.Name,
-            }))
-          );
-        } else {
-          setRoles([]);
-        }
-        setIsAuthenticated(true);
-        return { success: true };
-      }
-      return { success: false, error: "Login failed" };
-    } catch (error: any) {
-      return { success: false, error: error.message || "Login failed" };
+// Check token on load
+const token = localStorage.getItem("token");
+if (token) {
+  setIsAuthenticated(true);
+  refreshProfile();
+}
+
+const login = async (email: string, password: string) => {
+  try {
+    const res = await authApi.login({ email, password });
+    if (res.success && res.data) {
+      const data = res.data as any;
+      localStorage.setItem("token", data.token);
+      setIsAuthenticated(true);
+      await refreshProfile();
+      return { success: true };
     }
-  };
-
-  const register = async (
-    username: string,
-    email: string,
-    password: string
-  ) => {
-    try {
-      const response = await authApi.register(username, email, password);
-      if (response.data && (response.data as any).token) {
-        const token = (response.data as any).token;
-        localStorage.setItem("token", token);
-        const u = (response.data as any).user;
-        setUser({
-          id: u.id ?? u.ID,
-          username: u.username ?? u.Username,
-          email: u.email ?? u.Email,
-          phone: u.phone ?? u.Phone,
-          avatar: u.avatar ?? u.Avatar,
-        });
-        if (u && u.roles) {
-          setRoles(
-            (u.roles as any).map((r: any) => ({
-              id: r.ID ?? r.id,
-              name: r.name ?? r.Name,
-            }))
-          );
-        } else {
-          setRoles([]);
-        }
-        setIsAuthenticated(true);
-        return { success: true };
-      }
-      return { success: false, error: "Registration failed" };
-    } catch (error: any) {
-      return { success: false, error: error.message || "Registration failed" };
-    }
-  };
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    setUser(null);
-    setIsAuthenticated(false);
-    setRoles([]);
-  };
-
-  const isAdmin = () =>
-    roles().some((r) => r.name === "admin" || r.name === "administrator");
-
-  return {
-    user,
-    isAuthenticated,
-    isProfileLoading,
-    login,
-    register,
-    logout,
-    refreshProfile,
-    isAdmin,
-  };
+    return { success: false, error: res.error || "Login failed" };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Login failed" };
+  }
 };
+
+const register = async (username: string, email: string, password: string) => {
+  try {
+    const res = await authApi.register({ username, email, password });
+    if (res.success) {
+      return await login(email, password);
+    }
+    return { success: false, error: res.error || "Registration failed" };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Registration failed" };
+  }
+};
+
+const logout = () => {
+  localStorage.removeItem("token");
+  setUser(null);
+  setRoles([]);
+  setGroups([]);
+  setIsAuthenticated(false);
+};
+
+const isAdmin = () =>
+  roles().some(
+    (r) =>
+      r.name.toLowerCase() === "admin" ||
+      r.name.toLowerCase() === "administrator"
+  );
+
+export const useAuth = () => ({
+  user,
+  roles,
+  groups,
+  isAuthenticated,
+  isProfileLoading,
+  login,
+  register,
+  logout,
+  refreshProfile,
+  isAdmin,
+});

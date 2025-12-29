@@ -1,13 +1,6 @@
-import {
-  Component,
-  createSignal,
-  onMount,
-  For,
-  Show,
-  createMemo,
-} from "solid-js";
-import { usersApi, adminApi, authApi } from "../../utils/api";
+import { Component, createSignal, onMount, For, Show } from "solid-js";
 import { A } from "@solidjs/router";
+import { usersApi, rolesApi, groupsApi } from "../../utils/api";
 
 const Users: Component = () => {
   const [users, setUsers] = createSignal<any[]>([]);
@@ -22,7 +15,6 @@ const Users: Component = () => {
     email: "",
     password: "",
     phone: "",
-    avatar: "",
   });
   const [editing, setEditing] = createSignal<any | null>(null);
   const [search, setSearch] = createSignal("");
@@ -34,536 +26,613 @@ const Users: Component = () => {
     try {
       const [uRes, rRes, gRes] = await Promise.all([
         usersApi.getAll(),
-        adminApi.getRoles(),
-        adminApi.getGroups(),
+        rolesApi.getAll(),
+        groupsApi.getAll(),
       ]);
-      setUsers((uRes.data as any) || []);
-      setRoles((rRes.data as any) || []);
-      setGroups((gRes.data as any) || []);
-    } catch (e) {
-      console.error(e);
+      setUsers(Array.isArray(uRes.data) ? uRes.data : []);
+      setRoles(Array.isArray(rRes.data) ? rRes.data : []);
+      setGroups(Array.isArray(gRes.data) ? gRes.data : []);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const openCreate = () => setShowCreate(true);
+  onMount(load);
+
+  const filteredUsers = () => {
+    const term = search().toLowerCase();
+    return users().filter(
+      (u) =>
+        u.username?.toLowerCase().includes(term) ||
+        u.email?.toLowerCase().includes(term)
+    );
+  };
 
   const createUser = async () => {
-    const p = newUser();
-    if (!p.username || !p.email || !p.password)
-      return alert("همه فیلدها لازم هستند");
     try {
-      await authApi.register(
-        p.username,
-        p.email,
-        p.password,
-        p.phone,
-        p.avatar
-      );
-      setNewUser({
-        username: "",
-        email: "",
-        password: "",
-        phone: "",
-        avatar: "",
-      });
+      await usersApi.create(newUser());
+      setNewUser({ username: "", email: "", password: "", phone: "" });
       setShowCreate(false);
-      await load();
-      alert("کاربر با موفقیت ایجاد شد");
-    } catch (e) {
-      console.error(e);
-      alert("خطا در ایجاد کاربر");
+      load();
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  const openEdit = async (id: number) => {
-    try {
-      const res = await usersApi.getById(id);
-      const u = (res.data as any) || {};
-      setEditing(u || null);
-      setShowEdit(true);
-      setSelectedRoles((u.Roles || []).map((r: any) => Number(r.ID ?? r.id)));
-      setSelectedGroups((u.Groups || []).map((g: any) => Number(g.ID ?? g.id)));
-      setEditing((prev: any) => ({
-        ...(prev || {}),
-        phone: u.phone ?? u.Phone ?? "",
-        avatar: u.avatar ?? u.Avatar ?? "",
-      }));
-    } catch (e) {
-      console.error(e);
-      alert("خطا در بارگذاری کاربر");
-    }
+  const startEdit = (user: any) => {
+    setEditing(user);
+    setSelectedRoles(user.Roles?.map((r: any) => r.id) || []);
+    setSelectedGroups(user.Groups?.map((g: any) => g.id) || []);
+    setShowEdit(true);
   };
 
   const saveEdit = async () => {
-    const u = editing();
-    if (!u) return;
+    if (!editing()) return;
     try {
-      const payload: any = {
-        username: u.Username ?? u.username,
-        email: u.Email ?? u.email,
-      };
-      if ((u as any).phone !== undefined) payload.phone = (u as any).phone;
-      if ((u as any).avatar !== undefined) payload.avatar = (u as any).avatar;
-      if ((u as any).password) payload.password = (u as any).password;
+      await usersApi.update(editing().id, {
+        username: editing().username,
+        email: editing().email,
+        phone: editing().phone,
+      });
 
-      await usersApi.update(u.ID ?? u.id, payload);
+      const currentRoles = editing().Roles?.map((r: any) => r.id) || [];
+      for (const rid of selectedRoles()) {
+        if (!currentRoles.includes(rid)) {
+          await usersApi.addRole(editing().id, rid);
+        }
+      }
+      for (const rid of currentRoles) {
+        if (!selectedRoles().includes(rid)) {
+          await usersApi.removeRole(editing().id, rid);
+        }
+      }
 
-      const existingRoleIds = (u.Roles || []).map((r: any) =>
-        Number(r.ID ?? r.id)
-      );
-      const wantRoleIds = selectedRoles().map(Number);
-      const toAddRoles = wantRoleIds.filter(
-        (id) => !existingRoleIds.includes(id)
-      );
-      const toRemoveRoles = existingRoleIds.filter(
-        (id: number) => !wantRoleIds.includes(id)
-      );
-      for (const rid of toAddRoles) await usersApi.addRole(u.ID ?? u.id, rid);
-      for (const rid of toRemoveRoles)
-        await usersApi.removeRole(u.ID ?? u.id, rid);
+      const currentGroups = editing().Groups?.map((g: any) => g.id) || [];
+      for (const gid of selectedGroups()) {
+        if (!currentGroups.includes(gid)) {
+          await groupsApi.addUser(gid, editing().id);
+        }
+      }
+      for (const gid of currentGroups) {
+        if (!selectedGroups().includes(gid)) {
+          await groupsApi.removeUser(gid, editing().id);
+        }
+      }
 
-      const existingGroupIds = (u.Groups || []).map((g: any) =>
-        Number(g.ID ?? g.id)
-      );
-      const wantGroupIds = selectedGroups().map(Number);
-      const toAddGroups = wantGroupIds.filter(
-        (id) => !existingGroupIds.includes(id)
-      );
-      const toRemoveGroups = existingGroupIds.filter(
-        (id: number) => !wantGroupIds.includes(id)
-      );
-      for (const gid of toAddGroups)
-        await adminApi.addUserToGroup(gid, u.ID ?? u.id);
-      for (const gid of toRemoveGroups)
-        await adminApi.removeUserFromGroup(gid, u.ID ?? u.id);
-
-      await load();
       setShowEdit(false);
       setEditing(null);
-      alert("تغییرات ذخیره شد");
-    } catch (e) {
-      console.error(e);
-      alert("خطا در ذخیره تغییرات");
+      load();
+    } catch (err) {
+      console.error(err);
     }
   };
 
   const deleteUser = async (id: number) => {
-    if (!confirm("آیا از حذف این کاربر مطمئن هستید؟")) return;
+    if (!confirm("حذف کاربر؟")) return;
     try {
       await usersApi.delete(id);
-      await load();
-    } catch (e) {
-      console.error(e);
-      alert("خطا در حذف کاربر");
+      load();
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  const toggleSelectedRole = (roleId: number) => {
-    const s = selectedRoles().map(Number);
-    const idNum = Number(roleId);
-    if (s.includes(idNum)) setSelectedRoles(s.filter((id) => id !== idNum));
-    else setSelectedRoles([...s, idNum]);
-  };
-
-  const toggleSelectedGroup = (groupId: number) => {
-    const s = selectedGroups().map(Number);
-    const idNum = Number(groupId);
-    if (s.includes(idNum)) setSelectedGroups(s.filter((id) => id !== idNum));
-    else setSelectedGroups([...s, idNum]);
-  };
-
-  const uploadAvatarForUser = async (userId: number, file: File) => {
+  const handleAvatar = async (e: Event) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file || !editing()) return;
+    const form = new FormData();
+    form.append("avatar", file);
     try {
-      const form = new FormData();
-      form.append("avatar", file);
-      await adminApi.uploadUserAvatar(userId, form);
-      await load();
-      alert("تصویر پروفایل بارگذاری شد");
-    } catch (e) {
-      console.error(e);
-      alert("خطا در بارگذاری تصویر");
+      await usersApi.uploadAvatar(editing().id, form);
+      load();
+    } catch (err) {
+      console.error(err);
     }
   };
-
-  onMount(load);
 
   return (
-    <div class="p-6" dir="rtl">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-2xl font-semibold">مدیریت کاربران</h2>
-        <div class="flex gap-2">
-          <button class="btn btn-outline" onClick={openCreate}>
-            افزودن کاربر
-          </button>
-          <button class="btn btn-ghost" onClick={load}>
-            بارگذاری مجدد
-          </button>
+    <div class="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div class="max-w-7xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div class="sticky top-0 z-10 bg-linear-to-r from-indigo-600 via-indigo-700 to-indigo-800 text-white p-8 rounded-2xl border-b-4 border-indigo-900 mb-8 shadow-lg">
+          <div class="flex items-center justify-between">
+            <div>
+              <h1 class="text-4xl font-bold flex items-center gap-3">
+                <span class="text-3xl">👥</span>
+                مدیریت کاربران
+              </h1>
+              <p class="text-indigo-100 mt-2">
+                مدیریت کاربران، نقش‌ها و دسترسی‌ها
+              </p>
+            </div>
+            <button
+              class="px-8 py-4 bg-linear-to-r from-green-500 to-green-600 text-white rounded-xl hover:shadow-2xl hover:scale-105 transition-all font-bold text-lg flex items-center gap-2"
+              onClick={() => setShowCreate(true)}
+            >
+              <span>➕</span>
+              <span>کاربر جدید</span>
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div class="mb-4 flex items-center gap-3">
-        <input
-          class="border rounded px-3 py-2 flex-1"
-          placeholder="جستجو بر اساس نام کاربری یا ایمیل..."
-          value={search()}
-          onInput={(e) => setSearch(e.currentTarget.value)}
-        />
-        <button class="btn btn-sm" onClick={() => setSearch("")}>
-          پاک کردن
-        </button>
-      </div>
+        {/* Search Bar */}
+        <div class="mb-8 flex items-center gap-4">
+          <div class="relative flex-1 max-w-md">
+            <span class="absolute left-4 top-3 text-2xl">🔍</span>
+            <input
+              type="search"
+              placeholder="جستجو برای نام کاربری یا ایمیل..."
+              value={search()}
+              onInput={(e) => setSearch(e.currentTarget.value)}
+              class="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all bg-white shadow-sm"
+            />
+          </div>
+          <span class="text-sm font-medium text-slate-600 bg-white px-4 py-3 rounded-xl border border-slate-200 shadow-sm">
+            {filteredUsers().length} کاربر
+          </span>
+        </div>
 
-      <Show
-        when={!loading()}
-        fallback={<div class="p-4 text-center">در حال بارگذاری...</div>}
-      >
-        <div class="bg-white rounded shadow overflow-x-auto">
-          <table class="min-w-full">
-            <thead class="bg-slate-50">
-              <tr>
-                <th class="px-4 py-2 text-right">ID</th>
-                <th class="px-4 py-2 text-right">نام کاربری</th>
-                <th class="px-4 py-2 text-right">ایمیل</th>
-                <th class="px-4 py-2 text-right">نقش‌ها</th>
-                <th class="px-4 py-2 text-right">گروه‌ها</th>
-                <th class="px-4 py-2 text-right">عملیات</th>
-              </tr>
-            </thead>
-            <tbody>
-              <For
-                each={createMemo(() => {
-                  const q = search().trim().toLowerCase();
-                  if (!q) return users();
-                  return (users() || []).filter((u: any) => {
-                    const username = String(
-                      u.Username ?? u.username ?? ""
-                    ).toLowerCase();
-                    const email = String(
-                      u.Email ?? u.email ?? ""
-                    ).toLowerCase();
-                    return (
-                      username.includes(q) ||
-                      email.includes(q) ||
-                      String(u.ID ?? u.id).includes(q)
-                    );
-                  });
-                })()}
-              >
-                {(u: any) => (
-                  <tr class="border-t hover:bg-slate-50">
-                    <td class="px-4 py-2 text-right">{u.ID ?? u.id}</td>
-                    <td class="px-4 py-2 text-right">
-                      <A
-                        href={`/admin/users/${u.ID ?? u.id}`}
-                        class="text-blue-600 hover:underline"
+        <Show
+          when={!loading()}
+          fallback={
+            <div class="text-center py-12">
+              <p class="text-lg text-slate-600">در حال بارگیری کاربران...</p>
+            </div>
+          }
+        >
+          <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <For each={filteredUsers()}>
+              {(user) => (
+                <div class="rounded-2xl bg-white border-2 border-slate-200 hover:border-indigo-300 shadow-sm hover:shadow-lg transition-all p-6 space-y-4 group">
+                  {/* User Header */}
+                  <div class="flex items-center justify-between pb-4 border-b border-slate-200">
+                    <div class="flex items-center gap-4 flex-1">
+                      <div class="relative">
+                        <img
+                          src={user.avatar || "/avatar-placeholder.png"}
+                          alt={user.username}
+                          class="h-16 w-16 rounded-full object-cover border-3 border-indigo-200 group-hover:border-indigo-400 transition-colors"
+                        />
+                        <span class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></span>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <p class="font-bold text-lg text-slate-800 truncate">
+                          {user.username}
+                        </p>
+                        <p class="text-sm text-slate-600 truncate">
+                          {user.email}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Roles Section */}
+                  <div>
+                    <div class="flex items-center gap-2 mb-2">
+                      <span class="text-sm font-bold text-indigo-600 uppercase tracking-wide">
+                        نقش‌ها
+                      </span>
+                      <span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold">
+                        {user.Roles?.length || 0}
+                      </span>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                      <Show
+                        when={user.Roles && user.Roles.length > 0}
+                        fallback={
+                          <span class="text-xs text-slate-400 italic">
+                            هیچ نقشی تعریف نشده
+                          </span>
+                        }
                       >
-                        {u.Username ?? u.username}
-                      </A>
-                    </td>
-                    <td class="px-4 py-2 text-right">{u.Email ?? u.email}</td>
-                    <td class="px-4 py-2 text-right">
-                      <div class="flex gap-2 flex-wrap">
-                        <For each={u.Roles || []}>
+                        <For each={user.Roles || []}>
                           {(r: any) => (
-                            <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs">
-                              {r.Name ?? r.name}
+                            <span class="px-3 py-1 bg-linear-to-r from-indigo-50 to-indigo-100 border border-indigo-200 rounded-lg text-xs font-medium text-indigo-700 hover:from-indigo-100 hover:to-indigo-200 transition-all">
+                              {r.name}
                             </span>
                           )}
                         </For>
-                      </div>
-                    </td>
-                    <td class="px-4 py-2 text-right">
-                      <div class="flex gap-2 flex-wrap">
-                        <For each={u.Groups || []}>
-                          {(g: any) => (
-                            <span class="px-2 py-1 bg-slate-100 rounded">
-                              {g.Name ?? g.name}
-                            </span>
-                          )}
-                        </For>
-                      </div>
-                    </td>
-                    <td class="px-4 py-2 text-right">
-                      <div class="flex gap-2 justify-end">
-                        <button
-                          class="btn btn-sm"
-                          onClick={() => openEdit(u.ID ?? u.id)}
-                        >
-                          ویرایش
-                        </button>
-                        <button
-                          class="btn btn-sm btn-danger"
-                          onClick={() => deleteUser(u.ID ?? u.id)}
-                        >
-                          حذف
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </For>
-            </tbody>
-          </table>
-        </div>
-      </Show>
+                      </Show>
+                    </div>
+                  </div>
 
-      {/* Create modal */}
+                  {/* Groups Section */}
+                  <div>
+                    <div class="flex items-center gap-2 mb-2">
+                      <span class="text-sm font-bold text-purple-600 uppercase tracking-wide">
+                        گروه‌ها
+                      </span>
+                      <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">
+                        {user.Groups?.length || 0}
+                      </span>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                      <Show
+                        when={user.Groups && user.Groups.length > 0}
+                        fallback={
+                          <span class="text-xs text-slate-400 italic">
+                            هیچ گروهی تعریف نشده
+                          </span>
+                        }
+                      >
+                        <For each={user.Groups || []}>
+                          {(g: any) => (
+                            <span class="px-3 py-1 bg-linear-to-r from-purple-50 to-purple-100 border border-purple-200 rounded-lg text-xs font-medium text-purple-700 hover:from-purple-100 hover:to-purple-200 transition-all">
+                              {g.name}
+                            </span>
+                          )}
+                        </For>
+                      </Show>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div class="flex gap-3 pt-4">
+                    <button
+                      class="flex-1 px-4 py-3 bg-linear-to-r from-indigo-500 to-indigo-600 text-white rounded-lg hover:shadow-lg transition-all hover:scale-105 font-bold flex items-center justify-center gap-2 text-sm"
+                      onClick={() => startEdit(user)}
+                    >
+                      <span>✏️</span>
+                      <span>ویرایش</span>
+                    </button>
+                    <button
+                      class="px-4 py-3 bg-red-50 border border-red-200 text-red-600 rounded-lg hover:bg-red-100 hover:border-red-300 transition-all font-bold flex items-center justify-center gap-2 hover:scale-105"
+                      onClick={() => deleteUser(user.id)}
+                    >
+                      <span>🗑️</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </For>
+          </div>
+
+          <Show when={filteredUsers().length === 0}>
+            <div class="text-center py-16">
+              <p class="text-2xl mb-2">😴</p>
+              <p class="text-lg text-slate-600">هیچ کاربری پیدا نشد</p>
+              <p class="text-sm text-slate-500 mt-2">
+                جستجوی خود را امتحان کنید یا کاربر جدید اضافه کنید
+              </p>
+            </div>
+          </Show>
+        </Show>
+      </div>
+
+      {/* Create Modal */}
       <Show when={showCreate()}>
-        <div class="fixed inset-0 bg-black/30 flex items-center justify-center z-40">
-          <div class="bg-white p-6 rounded w-11/12 max-w-2xl" dir="rtl">
-            <h3 class="text-lg font-semibold mb-4">ایجاد کاربر جدید</h3>
-            <div class="grid grid-cols-1 gap-2">
-              <input
-                class="border rounded px-2 py-1"
-                placeholder="نام کاربری"
-                value={newUser().username}
-                onInput={(e) =>
-                  setNewUser({ ...newUser(), username: e.currentTarget.value })
-                }
-              />
-              <input
-                class="border rounded px-2 py-1"
-                placeholder="ایمیل"
-                value={newUser().email}
-                onInput={(e) =>
-                  setNewUser({ ...newUser(), email: e.currentTarget.value })
-                }
-              />
-              <input
-                class="border rounded px-2 py-1"
-                placeholder="رمز عبور"
-                type="password"
-                value={newUser().password}
-                onInput={(e) =>
-                  setNewUser({ ...newUser(), password: e.currentTarget.value })
-                }
-              />
-              <input
-                class="border rounded px-2 py-1"
-                placeholder="شماره تلفن"
-                value={newUser().phone}
-                onInput={(e) =>
-                  setNewUser({ ...newUser(), phone: e.currentTarget.value })
-                }
-              />
-              <input
-                class="border rounded px-2 py-1"
-                placeholder="آدرس تصویر پروفایل (URL)"
-                value={newUser().avatar}
-                onInput={(e) =>
-                  setNewUser({ ...newUser(), avatar: e.currentTarget.value })
-                }
-              />
-              <div class="flex gap-2 justify-end mt-3">
-                <button class="btn btn-primary" onClick={createUser}>
-                  ساخت
-                </button>
-                <button
-                  class="btn btn-outline"
-                  onClick={() => setShowCreate(false)}
-                >
-                  انصراف
-                </button>
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+            {/* Modal Header */}
+            <div class="bg-linear-to-r from-green-600 via-green-700 to-green-800 text-white p-6 rounded-t-2xl border-b-4 border-green-900">
+              <h2 class="text-2xl font-bold flex items-center gap-3">
+                <span class="text-2xl">➕</span>
+                کاربر جدید
+              </h2>
+              <p class="text-green-100 text-sm mt-1">فرم ایجاد کاربر جدید</p>
+            </div>
+
+            {/* Modal Content */}
+            <div class="p-6 space-y-4">
+              {/* Section 1: Basic Info */}
+              <div class="bg-linear-to-br from-slate-50 to-slate-100 rounded-xl p-5 border border-slate-200">
+                <h3 class="text-sm font-bold text-green-600 uppercase tracking-wide mb-4 flex items-center gap-2">
+                  <span class="text-lg">👤</span>
+                  اطلاعات کاربر
+                </h3>
+                <div class="space-y-3">
+                  <input
+                    placeholder="نام کاربری"
+                    value={newUser().username}
+                    onInput={(e) =>
+                      setNewUser({
+                        ...newUser(),
+                        username: e.currentTarget.value,
+                      })
+                    }
+                    class="w-full rounded-lg border-2 border-slate-200 px-4 py-3 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all"
+                  />
+                  <input
+                    placeholder="ایمیل"
+                    value={newUser().email}
+                    onInput={(e) =>
+                      setNewUser({ ...newUser(), email: e.currentTarget.value })
+                    }
+                    class="w-full rounded-lg border-2 border-slate-200 px-4 py-3 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all"
+                  />
+                  <input
+                    type="password"
+                    placeholder="رمز عبور"
+                    value={newUser().password}
+                    onInput={(e) =>
+                      setNewUser({
+                        ...newUser(),
+                        password: e.currentTarget.value,
+                      })
+                    }
+                    class="w-full rounded-lg border-2 border-slate-200 px-4 py-3 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all"
+                  />
+                  <input
+                    placeholder="تلفن"
+                    value={newUser().phone}
+                    onInput={(e) =>
+                      setNewUser({ ...newUser(), phone: e.currentTarget.value })
+                    }
+                    class="w-full rounded-lg border-2 border-slate-200 px-4 py-3 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all"
+                  />
+                </div>
               </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div class="sticky bottom-0 bg-linear-to-r from-slate-900 to-slate-800 border-t-4 border-green-600 p-4 flex gap-3 rounded-b-2xl">
+              <button
+                class="flex-1 px-6 py-3 bg-linear-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transition-all hover:scale-105 font-bold flex items-center justify-center gap-2"
+                onClick={createUser}
+              >
+                <span>✅</span>
+                <span>ایجاد</span>
+              </button>
+              <button
+                class="flex-1 px-6 py-3 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-all font-bold flex items-center justify-center gap-2"
+                onClick={() => setShowCreate(false)}
+              >
+                <span>❌</span>
+                <span>لغو</span>
+              </button>
             </div>
           </div>
         </div>
       </Show>
 
-      {/* Edit modal */}
+      {/* Edit Modal */}
       <Show when={showEdit() && editing()}>
-        <div class="fixed inset-0 bg-black/30 flex items-center justify-center z-40">
-          <div class="bg-white p-6 rounded w-11/12 max-w-2xl" dir="rtl">
-            <h3 class="text-lg font-semibold mb-4">ویرایش کاربر</h3>
-            <div class="grid grid-cols-1 gap-3">
-              <div>
-                <label class="text-sm">نام کاربری</label>
-                <input
-                  class="border rounded px-2 py-1 w-full"
-                  value={editing().Username ?? editing().username}
-                  onInput={(e) =>
-                    setEditing({
-                      ...editing(),
-                      Username: e.currentTarget.value,
-                      username: e.currentTarget.value,
-                    })
-                  }
-                />
-              </div>
-              <div>
-                <label class="text-sm">ایمیل</label>
-                <input
-                  class="border rounded px-2 py-1 w-full"
-                  value={editing().Email ?? editing().email}
-                  onInput={(e) =>
-                    setEditing({
-                      ...editing(),
-                      Email: e.currentTarget.value,
-                      email: e.currentTarget.value,
-                    })
-                  }
-                />
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+            {/* Modal Header */}
+            <div class="sticky top-0 bg-linear-to-r from-indigo-600 via-indigo-700 to-indigo-800 text-white p-6 rounded-t-2xl border-b-4 border-indigo-900">
+              <h2 class="text-2xl font-bold flex items-center gap-3">
+                <span class="text-2xl">✏️</span>
+                ویرایش {editing()?.username}
+              </h2>
+              <p class="text-indigo-100 text-sm mt-1">
+                ویرایش اطلاعات کاربر، نقش‌ها و گروه‌ها
+              </p>
+            </div>
+
+            {/* Modal Content */}
+            <div class="p-6 space-y-6">
+              {/* Section 1: Basic Info */}
+              <div class="bg-linear-to-br from-slate-50 to-slate-100 rounded-xl p-5 border-2 border-slate-200 hover:border-indigo-300 transition-colors">
+                <h3 class="text-sm font-bold text-indigo-600 uppercase tracking-wide mb-4 flex items-center gap-2">
+                  <span class="text-lg">👤</span>
+                  اطلاعات شخصی
+                </h3>
+                <div class="space-y-3">
+                  <div>
+                    <label class="flex text-xs font-bold text-slate-700 mb-1 items-center gap-2">
+                      <span>📝</span>
+                      نام کاربری
+                    </label>
+                    <input
+                      placeholder="نام کاربری"
+                      value={editing()?.username || ""}
+                      onInput={(e) =>
+                        setEditing({
+                          ...editing(),
+                          username: e.currentTarget.value,
+                        })
+                      }
+                      class="w-full rounded-lg border-2 border-slate-200 px-4 py-3 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label class="flex text-xs font-bold text-slate-700 mb-1 items-center gap-2">
+                      <span>📧</span>
+                      ایمیل
+                    </label>
+                    <input
+                      placeholder="ایمیل"
+                      value={editing()?.email || ""}
+                      onInput={(e) =>
+                        setEditing({
+                          ...editing(),
+                          email: e.currentTarget.value,
+                        })
+                      }
+                      class="w-full rounded-lg border-2 border-slate-200 px-4 py-3 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label class="flex text-xs font-bold text-slate-700 mb-1 items-center gap-2">
+                      <span>📱</span>
+                      تلفن
+                    </label>
+                    <input
+                      placeholder="تلفن"
+                      value={editing()?.phone || ""}
+                      onInput={(e) =>
+                        setEditing({
+                          ...editing(),
+                          phone: e.currentTarget.value,
+                        })
+                      }
+                      class="w-full rounded-lg border-2 border-slate-200 px-4 py-3 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all"
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <label class="text-sm">شماره تلفن</label>
-                <input
-                  class="border rounded px-2 py-1 w-full"
-                  value={editing().phone ?? editing().Phone ?? ""}
-                  onInput={(e) =>
-                    setEditing({ ...editing(), phone: e.currentTarget.value })
-                  }
-                />
-              </div>
-
-              <div>
-                <label class="text-sm">آدرس تصویر پروفایل (URL)</label>
-                <input
-                  class="border rounded px-2 py-1 w-full"
-                  value={editing().avatar ?? editing().Avatar ?? ""}
-                  onInput={(e) =>
-                    setEditing({ ...editing(), avatar: e.currentTarget.value })
-                  }
-                />
-                <div class="mt-2">
-                  <label class="text-sm">یا آپلود تصویر</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onInput={(e: any) => {
-                      const f = e.currentTarget.files?.[0];
-                      if (f)
-                        uploadAvatarForUser(editing().ID ?? editing().id, f);
-                    }}
+              {/* Section 2: Avatar */}
+              <div class="bg-linear-to-br from-slate-50 to-slate-100 rounded-xl p-5 border-2 border-slate-200 hover:border-amber-300 transition-colors">
+                <h3 class="text-sm font-bold text-amber-600 uppercase tracking-wide mb-4 flex items-center gap-2">
+                  <span class="text-lg">🖼️</span>
+                  تصویر کاربر
+                </h3>
+                <div class="flex items-center gap-4">
+                  <img
+                    src={editing()?.avatar || "/avatar-placeholder.png"}
+                    alt={editing()?.username}
+                    class="w-20 h-20 rounded-full object-cover border-3 border-amber-200"
                   />
+                  <label class="flex-1 cursor-pointer">
+                    <div class="w-full px-4 py-3 bg-linear-to-r from-amber-500 to-amber-600 text-white rounded-lg hover:shadow-lg transition-all hover:scale-105 font-bold flex items-center justify-center gap-2">
+                      <span>📷</span>
+                      <span>انتخاب تصویر</span>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatar}
+                      class="hidden"
+                    />
+                  </label>
                 </div>
               </div>
 
-              <div>
-                <label class="text-sm">
-                  رمز جدید (خالی بگذارید اگر نمی‌خواهید تغییر دهید)
-                </label>
-                <input
-                  class="border rounded px-2 py-1 w-full"
-                  type="password"
-                  onInput={(e) =>
-                    setEditing({
-                      ...editing(),
-                      password: e.currentTarget.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div>
-                <div class="text-sm font-medium">نقش‌ها</div>
-                <div class="mt-2">
-                  <div class="text-sm text-slate-600 mb-1">انتخاب نقش‌ها</div>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <For each={roles()}>
-                      {(r: any) => {
-                        const rid = Number(r.ID ?? r.id);
-                        const checked = selectedRoles()
-                          .map(Number)
-                          .includes(rid);
-                        const permCount = (r.Permissions || []).length;
-                        return (
-                          <div class="p-2 border rounded flex items-start justify-between">
-                            <div>
-                              <label class="inline-flex items-center gap-2">
-                                <input
-                                  type="checkbox"
-                                  checked={checked}
-                                  onChange={() => toggleSelectedRole(rid)}
-                                />
-                                <span class="font-medium">
-                                  {r.Name ?? r.name}
-                                </span>
-                              </label>
-                              <div class="text-xs text-slate-500 mt-1">
-                                {r.Description ?? r.description ?? ""}
-                              </div>
-                              <div class="text-xs text-slate-400 mt-1">
-                                {permCount} دسترسی
-                              </div>
-                            </div>
-                            <div class="flex flex-col items-end gap-1">
-                              <For each={r.Permissions || []}>
-                                {(p: any) => (
-                                  <span class="px-2 py-1 bg-slate-50 rounded text-xs">
-                                    {p.Name ?? p.name}
-                                  </span>
-                                )}
-                              </For>
-                            </div>
-                          </div>
-                        );
-                      }}
-                    </For>
-                  </div>
+              {/* Section 3: Roles */}
+              <div class="bg-linear-to-br from-slate-50 to-slate-100 rounded-xl p-5 border-2 border-slate-200 hover:border-sky-300 transition-colors">
+                <h3 class="text-sm font-bold text-sky-600 uppercase tracking-wide mb-4 flex items-center gap-2">
+                  <span class="text-lg">🎭</span>
+                  نقش‌ها
+                  <span class="ml-auto px-2 py-1 bg-sky-100 text-sky-700 rounded-full text-xs font-bold">
+                    {selectedRoles().length}
+                  </span>
+                </h3>
+                <div class="grid grid-cols-2 gap-3">
+                  <For each={roles()}>
+                    {(role) => (
+                      <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-sky-50 transition-colors border border-sky-100 hover:border-sky-300">
+                        <input
+                          type="checkbox"
+                          checked={selectedRoles().includes(role.id)}
+                          onChange={(e) => {
+                            if (e.currentTarget.checked) {
+                              setSelectedRoles([...selectedRoles(), role.id]);
+                            } else {
+                              setSelectedRoles(
+                                selectedRoles().filter((id) => id !== role.id)
+                              );
+                            }
+                          }}
+                          class="w-4 h-4 rounded border-sky-300 cursor-pointer accent-sky-600"
+                        />
+                        <span class="text-sm font-medium text-slate-700">
+                          {role.name}
+                        </span>
+                      </label>
+                    )}
+                  </For>
                 </div>
               </div>
 
-              <div>
-                <div class="text-sm font-medium">گروه‌ها</div>
-                <div class="mt-3">
-                  <div class="text-sm text-slate-600 mb-1">
-                    عضویت در گروه‌ها
-                  </div>
-                  <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    <For each={groups()}>
-                      {(g: any) => {
-                        const gid = Number(g.ID ?? g.id);
-                        const checked = selectedGroups()
-                          .map(Number)
-                          .includes(gid);
-                        return (
-                          <label class="inline-flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => toggleSelectedGroup(gid)}
-                            />
-                            <span class="text-sm">{g.Name ?? g.name}</span>
-                          </label>
-                        );
-                      }}
-                    </For>
-                  </div>
+              {/* Section 4: Groups */}
+              <div class="bg-linear-to-br from-slate-50 to-slate-100 rounded-xl p-5 border-2 border-slate-200 hover:border-green-300 transition-colors">
+                <h3 class="text-sm font-bold text-green-600 uppercase tracking-wide mb-4 flex items-center gap-2">
+                  <span class="text-lg">👥</span>
+                  گروه‌ها
+                  <span class="ml-auto px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">
+                    {selectedGroups().length}
+                  </span>
+                </h3>
+                <div class="grid grid-cols-2 gap-3">
+                  <For each={groups()}>
+                    {(group) => (
+                      <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-green-50 transition-colors border border-green-100 hover:border-green-300">
+                        <input
+                          type="checkbox"
+                          checked={selectedGroups().includes(group.id)}
+                          onChange={(e) => {
+                            if (e.currentTarget.checked) {
+                              setSelectedGroups([
+                                ...selectedGroups(),
+                                group.id,
+                              ]);
+                            } else {
+                              setSelectedGroups(
+                                selectedGroups().filter((id) => id !== group.id)
+                              );
+                            }
+                          }}
+                          class="w-4 h-4 rounded border-green-300 cursor-pointer accent-green-600"
+                        />
+                        <span class="text-sm font-medium text-slate-700">
+                          {group.name}
+                        </span>
+                      </label>
+                    )}
+                  </For>
                 </div>
               </div>
 
-              <div>
-                <div class="text-sm font-medium">دسترسی‌ها (از نقش‌ها)</div>
-                <div class="flex gap-2 flex-wrap mt-2">
-                  {Array.from(
-                    new Set(
-                      (editing().Roles || []).flatMap((r: any) =>
-                        (r.Permissions || []).map((p: any) => p.Name ?? p.name)
+              {/* Section 5: Permissions */}
+              <div class="bg-linear-to-br from-slate-50 to-slate-100 rounded-xl p-5 border-2 border-slate-200 hover:border-pink-300 transition-colors">
+                <h3 class="text-sm font-bold text-pink-600 uppercase tracking-wide mb-4 flex items-center gap-2">
+                  <span class="text-lg">🔐</span>
+                  دسترسی‌ها (از نقش‌ها)
+                </h3>
+                <Show
+                  when={
+                    Array.from(
+                      new Set(
+                        (editing()?.Roles || []).flatMap((r: any) =>
+                          (r.Permissions || []).map(
+                            (p: any) => p.name ?? p.Name
+                          )
+                        )
                       )
-                    )
-                  ).map((p: any) => (
-                    <span class="px-2 py-1 bg-slate-50 rounded">{p}</span>
-                  ))}
-                </div>
-              </div>
-
-              <div class="flex gap-2 justify-end mt-4">
-                <button class="btn btn-primary" onClick={saveEdit}>
-                  ذخیره
-                </button>
-                <button
-                  class="btn btn-outline"
-                  onClick={() => {
-                    setShowEdit(false);
-                    setEditing(null);
-                  }}
+                    ).length > 0
+                  }
+                  fallback={
+                    <p class="text-sm text-slate-500 italic text-center py-4">
+                      هیچ دسترسی‌ای برای نقش‌های انتخاب‌شده تعریف نشده
+                    </p>
+                  }
                 >
-                  بستن
-                </button>
+                  <div class="flex flex-wrap gap-2">
+                    <For
+                      each={Array.from(
+                        new Set(
+                          (editing()?.Roles || []).flatMap((r: any) =>
+                            (r.Permissions || []).map(
+                              (p: any) => p.name ?? p.Name
+                            )
+                          )
+                        )
+                      )}
+                    >
+                      {(p) => (
+                        <span class="px-3 py-2 bg-linear-to-r from-pink-100 to-pink-50 border border-pink-200 rounded-lg text-xs font-medium text-pink-700 hover:from-pink-200 hover:to-pink-100 transition-all">
+                          {p as string}
+                        </span>
+                      )}
+                    </For>
+                  </div>
+                </Show>
               </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div class="sticky bottom-0 bg-linear-to-r from-slate-900 to-slate-800 border-t-4 border-indigo-600 p-4 flex gap-3 rounded-b-2xl">
+              <button
+                class="flex-1 px-6 py-3 bg-linear-to-r from-indigo-500 to-indigo-600 text-white rounded-lg hover:shadow-lg transition-all hover:scale-105 font-bold flex items-center justify-center gap-2"
+                onClick={saveEdit}
+              >
+                <span>💾</span>
+                <span>ذخیره</span>
+              </button>
+              <button
+                class="flex-1 px-6 py-3 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-all font-bold flex items-center justify-center gap-2"
+                onClick={() => {
+                  setShowEdit(false);
+                  setEditing(null);
+                }}
+              >
+                <span>❌</span>
+                <span>بستن</span>
+              </button>
             </div>
           </div>
         </div>

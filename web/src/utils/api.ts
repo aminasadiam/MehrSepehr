@@ -1,4 +1,13 @@
+// api.ts کامل و اصلاح‌شده
 const API_BASE_URL = "http://localhost:8080/api";
+const BASE_URL = "http://localhost:8080";
+
+// Utility function to build image URLs
+export const getImageUrl = (path: string | undefined): string => {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  return `${BASE_URL}${path}`;
+};
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -24,235 +33,202 @@ class ApiClient {
     this.baseURL = baseURL;
   }
 
+  private buildUrl(endpoint: string, params?: Record<string, any>): string {
+    if (!params) return `${this.baseURL}${endpoint}`;
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined && value !== null) {
+        query.append(key, String(value));
+      }
+    }
+    const q = query.toString();
+    return `${this.baseURL}${endpoint}${q ? `?${q}` : ""}`;
+  }
+
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    params?: Record<string, any>
   ): Promise<ApiResponse<T>> {
     const token = localStorage.getItem("token");
+    const url = this.buildUrl(endpoint, params);
 
     const headers = new Headers(options.headers || {});
-    if (!headers.has("Content-Type")) {
-      headers.set("Content-Type", "application/json");
-    }
+
     if (token) {
       headers.set("Authorization", `Bearer ${token}`);
     }
 
-    try {
-      const response = await fetch(`${this.baseURL}${endpoint}`, {
-        ...options,
-        headers,
-      });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new ApiError(
-          data.error || response.statusText || "Request failed",
-          response.status
-        );
+    if (!(options.body instanceof FormData)) {
+      if (!headers.has("Content-Type")) {
+        headers.set("Content-Type", "application/json");
       }
-
-      return data;
-    } catch (error: any) {
-      if (error instanceof ApiError) {
-        throw error;
-      }
-      throw new ApiError(error?.message || "Network error", 0);
     }
+
+    const response = await fetch(url, { ...options, headers });
+
+    let data: any = {};
+    try {
+      data = await response.json();
+    } catch {}
+
+    if (!response.ok) {
+      const errorMsg =
+        data.error || data.message || response.statusText || "Request failed";
+      throw new ApiError(errorMsg, response.status);
+    }
+
+    return data as ApiResponse<T>;
   }
 
-  async get<T>(endpoint: string): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: "GET" });
+  get<T>(endpoint: string, params?: Record<string, any>) {
+    return this.request<T>(endpoint, { method: "GET" }, params);
   }
 
-  async post<T>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
+  post<T>(endpoint: string, body?: any) {
     return this.request<T>(endpoint, {
       method: "POST",
-      body: JSON.stringify(body),
+      body:
+        body instanceof FormData
+          ? body
+          : body
+          ? JSON.stringify(body)
+          : undefined,
     });
   }
 
-  async put<T>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
+  put<T>(endpoint: string, body?: any) {
     return this.request<T>(endpoint, {
       method: "PUT",
-      body: JSON.stringify(body),
+      body:
+        body instanceof FormData
+          ? body
+          : body
+          ? JSON.stringify(body)
+          : undefined,
     });
   }
 
-  async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
+  delete<T>(endpoint: string) {
     return this.request<T>(endpoint, { method: "DELETE" });
   }
 
-  // upload using FormData (multipart). Will not set Content-Type to allow browser to add proper boundary.
-  async upload<T>(endpoint: string, form: FormData): Promise<ApiResponse<T>> {
-    const token = localStorage.getItem("token");
-    const headers = new Headers();
-    if (token) headers.set("Authorization", `Bearer ${token}`);
-
-    try {
-      const response = await fetch(`${this.baseURL}${endpoint}`, {
-        method: "POST",
-        body: form,
-        headers,
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new ApiError(
-          data.error || response.statusText || "Request failed",
-          response.status
-        );
-      }
-      return data;
-    } catch (error: any) {
-      if (error instanceof ApiError) throw error;
-      throw new ApiError(error?.message || "Network error", 0);
-    }
+  upload<T>(endpoint: string, form: FormData) {
+    return this.post<T>(endpoint, form);
   }
 }
 
-export const api = new ApiClient(API_BASE_URL);
+const api = new ApiClient(API_BASE_URL);
 
-// Auth API
 export const authApi = {
-  register: (
-    username: string,
-    email: string,
-    password: string,
-    phone?: string,
-    avatar?: string
-  ) => api.post("/auth/register", { username, email, password, phone, avatar }),
-
-  login: (email: string, password: string) =>
-    api.post("/auth/login", { email, password }),
-
+  register: (payload: any) => api.post("/auth/register", payload),
+  login: (payload: any) => api.post("/auth/login", payload),
   getProfile: () => api.get("/auth/profile"),
 };
 
-// Products API
-export const productsApi = {
-  getAll: (params?: { categoryId?: number | string; q?: string; brandId?: number | string }) => {
-    const search = new URLSearchParams();
-    if (params?.categoryId) search.append("category_id", String(params.categoryId));
-    if (params?.brandId) search.append("brand_id", String(params.brandId));
-    if (params?.q) search.append("q", params.q);
-    const query = search.toString();
-    const url = query ? `/products?${query}` : "/products";
-    return api.get(url);
-  },
-  getById: (id: number | string) => api.get(`/products/${id}`),
-  create: (product: any) => api.post("/products", product),
-  update: (id: number | string, product: any) =>
-    api.put(`/products/${id}`, product),
-  delete: (id: number | string) => api.delete(`/products/${id}`),
-  uploadImage: (id: number | string, form: FormData) =>
-    api.upload(`/products/${id}/images`, form),
-};
-
-// Categories API
 export const categoriesApi = {
-  getAll: () => api.get("/categories"),
-  getById: (id: number | string) => api.get(`/categories/${id}`),
-  getBySlug: (slug: string) => api.get(`/categories/slug/${slug}`),
-  create: (category: any) => api.post("/categories", category),
-  update: (id: number | string, category: any) =>
-    api.put(`/categories/${id}`, category),
-  delete: (id: number | string) => api.delete(`/categories/${id}`),
+  getAll: () => api.get("/admin/categories"),
+  create: (payload: any) => api.post("/admin/categories", payload),
+  update: (id: number | string, payload: any) =>
+    api.put(`/admin/categories/${id}`, payload),
+  delete: (id: number | string) => api.delete(`/admin/categories/${id}`),
 };
 
-// Brands API
-export const brandsApi = {
-  getAll: () => api.get("/brands"),
-  getById: (id: number | string) => api.get(`/brands/${id}`),
-  create: (brand: any) => api.post("/admin/brands", brand),
-  update: (id: number | string, brand: any) =>
-    api.put(`/admin/brands/${id}`, brand),
-  delete: (id: number | string) => api.delete(`/admin/brands/${id}`),
-};
-
-// Users API
 export const usersApi = {
   getAll: () => api.get("/users"),
   getById: (id: number | string) => api.get(`/users/${id}`),
+  create: (payload: any) => api.post("/users", payload),
   update: (id: number | string, payload: any) =>
     api.put(`/users/${id}`, payload),
   delete: (id: number | string) => api.delete(`/users/${id}`),
+  addRole: (id: number | string, roleId: number) =>
+    api.post(`/users/${id}/roles`, { role_id: roleId }),
+  removeRole: (id: number | string, roleId: number) =>
+    api.delete(`/users/${id}/roles/${roleId}`),
   uploadAvatar: (id: number | string, form: FormData) =>
     api.upload(`/users/${id}/avatar`, form),
-  // admin role management
-  addRole: (id: number | string, roleId: number) =>
-    api.post(`/admin/users/${id}/roles`, { role_id: roleId }),
-  removeRole: (id: number | string, roleId: number) =>
-    api.delete(`/admin/users/${id}/roles/${roleId}`),
 };
 
-// Orders API
+export const productsApi = {
+  getAll: (params?: any) => api.get("/products", params),
+  getById: (id: number | string) => api.get(`/products/${id}`),
+  create: (payload: any) => api.post("/products", payload),
+  update: (id: number | string, payload: any) =>
+    api.put(`/products/${id}`, payload),
+  delete: (id: number | string) => api.delete(`/products/${id}`),
+  uploadImage: (id: number | string, form: FormData) =>
+    api.upload(`/products/${id}/images`, form),
+  setGroupPrice: (productId: number | string, groupId: number, price: number) =>
+    api.post(`/products/${productId}/prices`, { group_id: groupId, price }),
+  removeGroupPrice: (productId: number | string, groupId: number) =>
+    api.delete(`/products/${productId}/prices/${groupId}`),
+};
+
 export const ordersApi = {
   getAll: () => api.get("/orders"),
-  getById: (id: number | string) => api.get(`/orders/${id}`),
-  create: (order: any) => api.post("/orders", order),
-  update: (id: number | string, order: any) => api.put(`/orders/${id}`, order),
-  delete: (id: number | string) => api.delete(`/orders/${id}`),
-  // admin endpoints
   adminGetAll: () => api.get("/admin/orders"),
-  adminGetById: (id: number | string) => api.get(`/admin/orders/${id}`),
-  adminUpdate: (id: number | string, order: any) =>
-    api.put(`/admin/orders/${id}`, order),
-  adminDelete: (id: number | string) => api.delete(`/admin/orders/${id}`),
+  getById: (id: number | string) => api.get(`/orders/${id}`),
+  create: (payload: any) => api.post("/orders", payload),
+  updateStatus: (id: number | string, status: string) =>
+    api.put(`/admin/orders/${id}/status`, { status }),
+  remove: (id: number | string) => api.delete(`/admin/orders/${id}`),
 };
 
-// Wallet API
 export const walletApi = {
   getMyWallet: () => api.get("/wallet"),
   addBalance: (amount: number) => api.post("/wallet/add", { amount }),
-  getById: (id: number | string) => api.get(`/wallet/${id}`),
-  // admin
-  adminGetById: (id: number | string) => api.get(`/admin/wallet/${id}`),
-  adminAddBalance: (id: number | string, amount: number) =>
-    api.post(`/admin/wallet/${id}/add`, { amount }),
+  adminGetById: (userId: number | string) => api.get(`/admin/wallet/${userId}`),
+  adminAddBalance: (userId: number | string, amount: number) =>
+    api.post(`/admin/wallet/${userId}/add`, { amount }),
 };
 
-// Admin Roles & Permissions
-export const adminApi = {
-  // roles
-  getRoles: () => api.get(`/admin/roles`),
-  createRole: (payload: any) => api.post(`/admin/roles`, payload),
-  getRole: (id: number | string) => api.get(`/admin/roles/${id}`),
-  updateRole: (id: number | string, payload: any) =>
-    api.put(`/admin/roles/${id}`, payload),
-  deleteRole: (id: number | string) => api.delete(`/admin/roles/${id}`),
-  addPermissionToRole: (id: number | string, permId: number) =>
-    api.post(`/admin/roles/${id}/permissions`, { permission_id: permId }),
-  removePermissionFromRole: (id: number | string, permId: number) =>
-    api.delete(`/admin/roles/${id}/permissions/${permId}`),
-  // permissions
-  getPermissions: () => api.get(`/admin/permissions`),
-  createPermission: (payload: any) => api.post(`/admin/permissions`, payload),
-  getPermission: (id: number | string) => api.get(`/admin/permissions/${id}`),
-  updatePermission: (id: number | string, payload: any) =>
-    api.put(`/admin/permissions/${id}`, payload),
-  deletePermission: (id: number | string) =>
-    api.delete(`/admin/permissions/${id}`),
-  // groups
-  getGroups: () => api.get(`/admin/groups`),
-  createGroup: (payload: any) => api.post(`/admin/groups`, payload),
-  getGroup: (id: number | string) => api.get(`/admin/groups/${id}`),
-  deleteGroup: (id: number | string) => api.delete(`/admin/groups/${id}`),
+export const rolesApi = {
+  getAll: () => api.get("/admin/roles"),
+  create: (payload: any) => api.post("/admin/roles", payload),
+  delete: (id: number | string) => api.delete(`/admin/roles/${id}`),
+  addPermissionToRole: (roleId: number, permId: number) =>
+    api.post(`/admin/roles/${roleId}/permissions`, { permission_id: permId }),
+  removePermissionFromRole: (roleId: number, permId: number) =>
+    api.delete(`/admin/roles/${roleId}/permissions/${permId}`),
+};
+
+export const permissionsApi = {
+  getAll: () => api.get("/admin/permissions"),
+  create: (payload: any) => api.post("/admin/permissions", payload),
+  delete: (id: number | string) => api.delete(`/admin/permissions/${id}`),
+};
+
+export const groupsApi = {
+  getAll: () => api.get("/admin/groups"),
+  create: (payload: any) => api.post("/admin/groups", payload),
+  delete: (id: number | string) => api.delete(`/admin/groups/${id}`),
   addProductToGroup: (id: number | string, productId: number) =>
     api.post(`/admin/groups/${id}/products`, { product_id: productId }),
-  removeProductFromGroup: (id: number | string, prodId: number) =>
-    api.delete(`/admin/groups/${id}/products/${prodId}`),
-  addUserToGroup: (id: number | string, userId: number) =>
+  removeProductFromGroup: (id: number | string, productId: number) =>
+    api.delete(`/admin/groups/${id}/products/${productId}`),
+  addUser: (id: number | string, userId: number) =>
     api.post(`/admin/groups/${id}/users`, { user_id: userId }),
-  removeUserFromGroup: (id: number | string, userId: number) =>
+  removeUser: (id: number | string, userId: number) =>
     api.delete(`/admin/groups/${id}/users/${userId}`),
-  uploadUserAvatar: (id: number | string, form: FormData) =>
-    api.upload(`/admin/users/${id}/avatar`, form),
-  // brands
-  getBrands: () => api.get(`/admin/brands`),
-  createBrand: (payload: any) => api.post(`/admin/brands`, payload),
-  getBrand: (id: number | string) => api.get(`/admin/brands/${id}`),
-  updateBrand: (id: number | string, payload: any) =>
-    api.put(`/admin/brands/${id}`, payload),
-  deleteBrand: (id: number | string) => api.delete(`/admin/brands/${id}`),
+};
+
+export const brandsApi = {
+  getAll: () => api.get("/brands"),
+  create: (payload: any) => api.post("/brands", payload),
+  getById: (id: number | string) => api.get(`/brands/${id}`),
+  update: (id: number | string, payload: any) =>
+    api.put(`/brands/${id}`, payload),
+  delete: (id: number | string) => api.delete(`/brands/${id}`),
+};
+
+export const adminApi = {
+  users: usersApi,
+  products: productsApi,
+  categories: categoriesApi,
+  orders: ordersApi,
+  wallet: walletApi,
+  roles: rolesApi,
+  permissions: permissionsApi,
+  groups: groupsApi,
+  brands: brandsApi,
 };

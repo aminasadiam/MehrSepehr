@@ -34,18 +34,27 @@ func (r *RoleRepository) Update(model *models.Role) error {
 }
 
 func (r *RoleRepository) Delete(id uint) error {
+	// remove associations first
+	if err := r.db.Table("role_permissions").Where("role_id = ?", id).Delete(nil).Error; err != nil {
+		return err
+	}
+	if err := r.db.Table("user_roles").Where("role_id = ?", id).Delete(nil).Error; err != nil {
+		return err
+	}
 	return r.db.Delete(&models.Role{}, id).Error
 }
 
 func (r *RoleRepository) AddPermission(roleID, permissionID uint) error {
-	return r.db.Model(&models.Role{Model: gorm.Model{ID: roleID}}).
-		Association("Permissions").
-		Append(&models.Permission{Model: gorm.Model{ID: permissionID}})
+	// ensure both exist
+	if err := r.db.Where("id = ?", roleID).First(&models.Role{}).Error; err != nil {
+		return err
+	}
+	if err := r.db.Where("id = ?", permissionID).First(&models.Permission{}).Error; err != nil {
+		return err
+	}
+	return r.db.Table("role_permissions").Create(map[string]interface{}{"role_id": roleID, "permission_id": permissionID}).Error
 }
 
 func (r *RoleRepository) RemovePermission(roleID, permissionID uint) error {
-	return r.db.Model(&models.Role{Model: gorm.Model{ID: roleID}}).
-		Association("Permissions").
-		Delete(&models.Permission{Model: gorm.Model{ID: permissionID}})
+	return r.db.Table("role_permissions").Where("role_id = ? AND permission_id = ?", roleID, permissionID).Delete(nil).Error
 }
-

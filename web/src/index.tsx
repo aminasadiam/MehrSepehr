@@ -56,7 +56,7 @@ render(
       <Route path="/products" component={withProtection(Products)} />
       <Route path="/products/:id" component={withProtection(ProductDetail)} />
       <Route path="/orders" component={withProtection(Orders)} />
-      {/* <Route path="/wallet" component={withProtection(Wallet)} /> */}
+      <Route path="/wallet" component={withProtection(Wallet)} />
       <Route path="/profile" component={withProtection(Profile)} />
       <Route
         path="/admin"
@@ -130,14 +130,14 @@ render(
           </AdminRoute>
         )}
       />
-      {/* <Route
+      <Route
         path="/admin/wallets"
         component={() => (
           <AdminRoute>
             <Wallets />
           </AdminRoute>
         )}
-      /> */}
+      />
       <Route
         path="/admin/users/:id"
         component={() => (

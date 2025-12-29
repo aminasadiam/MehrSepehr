@@ -5,11 +5,14 @@ import {
   ParentProps,
   Show,
   createEffect,
+  createResource,
   createSignal,
   onCleanup,
   onMount,
 } from "solid-js";
 import { useAuth } from "../store/auth";
+import { categoriesApi } from "../utils/api";
+import { Category, normalizeCategory } from "../types/api";
 
 interface StoreLayoutProps extends ParentProps {
   showCategoryNav?: boolean;
@@ -17,15 +20,14 @@ interface StoreLayoutProps extends ParentProps {
 
 const sidebarLinks = [
   { href: "/", label: "خانه", icon: "fa-solid fa-house" },
-  { href: "/products", label: "فهرست محصولات", icon: "fa-solid fa-box" },
-  { href: "/products", label: "پخت و پز", icon: "fa-solid fa-kitchen-set" },
-  { href: "/products", label: "آشپزخانه", icon: "fa-solid fa-bowl-food" },
-  { href: "/products", label: "یخچال و فریزر", icon: "fa-solid fa-snowflake" },
+  { href: "/products", label: "محصولات", icon: "fa-solid fa-bowl-food" },
   { href: "/orders", label: "سفارش‌های من", icon: "fa-solid fa-receipt" },
+  { href: "/wallet", label: "کیف پول", icon: "fa-solid fa-wallet" },
+  { href: "/profile", label: "پروفایل", icon: "fa-solid fa-circle-user" },
 ];
 
 const accountLinks = [
-  // { href: "/wallet", label: "کیف پول", icon: "fa-solid fa-wallet" },
+  { href: "/wallet", label: "کیف پول", icon: "fa-solid fa-wallet" },
   { href: "/profile", label: "پروفایل", icon: "fa-solid fa-circle-user" },
 ];
 
@@ -52,22 +54,37 @@ const sidebarSocial = [
 
 const footerLinks = {
   categories: [
-    { label: "خانه", href: "/" },
-    { label: "لوازم آشپزخانه", href: "/products" },
-    { label: "لوازم خانگی برقی", href: "/products" },
-    { label: "دسته‌بندی‌ها", href: "/products" },
+    { label: "خانه", href: "/", icon: "fa-solid fa-house" },
+    {
+      label: "لوازم آشپزخانه",
+      href: "/products",
+      icon: "fa-solid fa-bowl-food",
+    },
+    { label: "لوازم خانگی برقی", href: "/products", icon: "fa-solid fa-plug" },
+    { label: "دسته‌بندی‌ها", href: "/products", icon: "fa-solid fa-list" },
   ],
   services: [
-    { label: "تماس با ما", href: "#contact" },
-    { label: "پشتیبانی ۲۴/۷", href: "#contact" },
-    { label: "درباره ما", href: "#contact" },
-    { label: "سوالات متداول", href: "#contact" },
+    { label: "تماس با ما", href: "#contact", icon: "fa-solid fa-phone" },
+    { label: "پشتیبانی ۲۴/۷", href: "#contact", icon: "fa-solid fa-headset" },
+    { label: "درباره ما", href: "#contact", icon: "fa-solid fa-info-circle" },
+    {
+      label: "سوالات متداول",
+      href: "#contact",
+      icon: "fa-solid fa-circle-question",
+    },
   ],
   account: [
-    { label: "حساب کاربری", href: "/profile" },
-    { label: "سفارش‌های من", href: "/orders" },
-    // { label: "کیف پول", href: "/wallet" },
-    { label: "ورود / ثبت نام", href: "/login" },
+    { label: "حساب کاربری", href: "/profile", icon: "fa-solid fa-user" },
+    {
+      label: "سفارش‌های من",
+      href: "/orders",
+      icon: "fa-solid fa-shopping-bag",
+    },
+    {
+      label: "ورود / ثبت نام",
+      href: "/login",
+      icon: "fa-solid fa-right-to-bracket",
+    },
   ],
 };
 
@@ -110,6 +127,29 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
   const [isScrolled, setIsScrolled] = createSignal(false);
   const navigate = useNavigate();
 
+  const [categories] = createResource<Category[]>(async () => {
+    const response = await categoriesApi.getAll();
+    const payload = Array.isArray(response.data) ? response.data : [];
+    return payload.map(normalizeCategory);
+  });
+
+  const [expandedCategories, setExpandedCategories] = createSignal<Set<number>>(
+    new Set()
+  );
+
+  const toggleCategory = (categoryId: number) => {
+    const expanded = new Set(expandedCategories());
+    if (expanded.has(categoryId)) {
+      expanded.delete(categoryId);
+    } else {
+      expanded.add(categoryId);
+    }
+    setExpandedCategories(expanded);
+  };
+
+  const isExpanded = (categoryId: number) =>
+    expandedCategories().has(categoryId);
+
   const closeSidebar = () => setIsSidebarOpen(false);
   const toggleSidebar = () => {
     if (!isDesktop()) {
@@ -125,7 +165,7 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
   const handleSearch = () => {
     const q = search().trim();
     if (q) {
-      navigate(`/products?q=${encodeURIComponent(q)}`);
+      navigate(`/products?search=${encodeURIComponent(q)}`);
     } else {
       navigate(`/products`);
     }
@@ -219,31 +259,29 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
           </div>
 
           <nav class="sidebar-nav" aria-label="دسترسی سریع">
-            <For each={sidebarLinks}>
-              {(item) => (
-                <A
-                  href={item.href}
-                  class="sidebar-link group"
-                  onClick={closeSidebar}
-                >
-                  <div class="w-12 h-12 rounded-xl bg-slate-100 group-hover:bg-linear-to-br group-hover:from-indigo-500 group-hover:to-purple-600 flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:rotate-3">
-                    <i
-                      class={`${item.icon} text-slate-600 group-hover:text-white transition-colors`}
-                    ></i>
-                  </div>
-                  <span class="font-semibold group-hover:text-indigo-600 transition-colors">
-                    {item.label}
-                  </span>
-                </A>
-              )}
-            </For>
-          </nav>
-
-          <Show when={auth.isAuthenticated()}>
-            <div class="sidebar-nav" aria-label="لینک‌های کاربری">
-              <p class="text-xs uppercase tracking-widest text-slate-400 mb-4 px-3 font-bold">
-                حساب کاربری
-              </p>
+            <p class="text-xs uppercase tracking-widest text-slate-400 mb-4 px-3 font-bold">
+              ⚡ دسترسی سریع
+            </p>
+            <div class="space-y-1">
+              <For each={sidebarLinks}>
+                {(item) => (
+                  <A
+                    href={item.href}
+                    class="group flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-300 hover:bg-linear-to-l hover:from-indigo-50 hover:via-purple-50 hover:to-pink-50 hover:border-l-4 hover:border-indigo-500"
+                    onClick={closeSidebar}
+                  >
+                    <div class="w-10 h-10 rounded-lg bg-slate-100 group-hover:bg-linear-to-br group-hover:from-indigo-500 group-hover:to-purple-600 flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg">
+                      <i
+                        class={`${item.icon} text-slate-600 group-hover:text-white transition-colors text-sm`}
+                      ></i>
+                    </div>
+                    <span class="flex-1 text-right font-semibold text-slate-700 group-hover:text-indigo-900 transition-colors">
+                      {item.label}
+                    </span>
+                    <i class="fa-solid fa-arrow-left text-xs text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all opacity-0 group-hover:opacity-100"></i>
+                  </A>
+                )}
+              </For>
               <Show when={auth.isAdmin()}>
                 <A
                   href="/admin"
@@ -256,26 +294,108 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
                   <span class="font-bold text-indigo-900">پنل مدیریت</span>
                 </A>
               </Show>
-              <For each={accountLinks}>
-                {(item) => (
-                  <A
-                    href={item.href}
-                    class="sidebar-link group"
-                    onClick={closeSidebar}
-                  >
-                    <div class="w-12 h-12 rounded-xl bg-slate-100 group-hover:bg-linear-to-br group-hover:from-indigo-500 group-hover:to-purple-600 flex items-center justify-center transition-all duration-300 group-hover:scale-110">
-                      <i
-                        class={`${item.icon} text-slate-600 group-hover:text-white transition-colors`}
-                      ></i>
-                    </div>
-                    <span class="font-semibold group-hover:text-indigo-600 transition-colors">
-                      {item.label}
-                    </span>
-                  </A>
+            </div>
+          </nav>
+
+          {/* Categories Section */}
+          <div class="sidebar-nav" aria-label="دسته‌بندی‌ها">
+            <p class="text-xs uppercase tracking-widest text-slate-400 mb-4 px-3 font-bold">
+              🏷️ دسته‌بندی‌ها
+            </p>
+            <Show
+              when={!categories.loading}
+              fallback={
+                <div class="space-y-2 px-3">
+                  {Array(4)
+                    .fill(null)
+                    .map(() => (
+                      <div class="h-10 bg-slate-200 rounded-lg animate-pulse"></div>
+                    ))}
+                </div>
+              }
+            >
+              <For each={categories() || []}>
+                {(category) => (
+                  <div class="space-y-1">
+                    {/* Parent Category */}
+                    <button
+                      type="button"
+                      class={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-300 text-sm font-medium ${
+                        isExpanded(category.id)
+                          ? "bg-indigo-100 text-indigo-700"
+                          : "text-slate-700 hover:bg-slate-100"
+                      }`}
+                      onClick={() => {
+                        if (category.children && category.children.length > 0) {
+                          toggleCategory(category.id);
+                        } else {
+                          navigate(`/products?categoryId=${category.id}`);
+                          closeSidebar();
+                        }
+                      }}
+                    >
+                      <div
+                        class={`w-8 h-8 rounded-lg ${
+                          isExpanded(category.id)
+                            ? "bg-linear-to-br from-blue-500 to-indigo-600"
+                            : "bg-slate-200"
+                        } flex items-center justify-center transition-all duration-300`}
+                      >
+                        <Show
+                          when={
+                            category.children && category.children.length > 0
+                          }
+                          fallback={
+                            <i class="fa-solid fa-tag text-xs text-white"></i>
+                          }
+                        >
+                          <i
+                            class={`fa-solid fa-chevron-down text-white text-xs transition-transform duration-300 ${
+                              isExpanded(category.id) ? "rotate-180" : ""
+                            }`}
+                          ></i>
+                        </Show>
+                      </div>
+                      <span class="flex-1 text-right">{category.name}</span>
+                      <Show
+                        when={category.children && category.children.length > 0}
+                      >
+                        <span class="text-xs bg-slate-200 px-2 py-1 rounded-full font-bold">
+                          {category.children?.length}
+                        </span>
+                      </Show>
+                    </button>
+
+                    {/* Child Categories */}
+                    <Show
+                      when={
+                        isExpanded(category.id) &&
+                        category.children &&
+                        category.children.length > 0
+                      }
+                    >
+                      <div class="space-y-1 ps-4 border-r-2 border-slate-200 mr-2">
+                        <For each={category.children || []}>
+                          {(child) => (
+                            <A
+                              href={`/products?categoryId=${child.id}`}
+                              class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-all duration-300 group"
+                              onClick={closeSidebar}
+                            >
+                              <i class="fa-solid fa-dot text-xs group-hover:text-blue-600"></i>
+                              <span class="flex-1 text-right">
+                                {child.name}
+                              </span>
+                            </A>
+                          )}
+                        </For>
+                      </div>
+                    </Show>
+                  </div>
                 )}
               </For>
-            </div>
-          </Show>
+            </Show>
+          </div>
 
           <div class="sidebar-footer">
             <div class="space-y-3">
@@ -474,7 +594,7 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
               {/* Top Section */}
               <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-8 border-b border-slate-700">
                 <div class="flex items-center gap-5">
-                  <div class="w-24 h-24 rounded-3xl bg-linear-to-br from-indigo-500 via-purple-600 to-pink-600 flex items-center justify-center shadow-2xl">
+                  <div class="w-24 h-24 rounded-3xl bg-linear-to-br flex items-center justify-center shadow-2xl">
                     <img
                       class="w-20 h-20 object-contain"
                       src="/assets/images/logos.png"
@@ -514,9 +634,13 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
                         <li>
                           <a
                             href={link.href}
-                            class="text-slate-300 hover:text-white hover:-translate-x-1.5 transition-all duration-300 inline-flex items-center gap-2 font-medium"
+                            class="flex items-center gap-3 text-slate-300 hover:text-white hover:translate-x-1 transition-all duration-300 font-medium group"
                           >
-                            <i class="fa-solid fa-chevron-left text-xs opacity-0 group-hover:opacity-100"></i>
+                            <span class="w-6 h-6 rounded-lg bg-white/10 group-hover:bg-linear-to-br group-hover:from-indigo-500 group-hover:to-cyan-500 flex items-center justify-center transition-all duration-300">
+                              <i
+                                class={`${link.icon} text-xs group-hover:text-white`}
+                              ></i>
+                            </span>
                             {link.label}
                           </a>
                         </li>
@@ -536,9 +660,13 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
                         <li>
                           <a
                             href={link.href}
-                            class="text-slate-300 hover:text-white hover:-translate-x-1.5 transition-all duration-300 inline-flex items-center gap-2 font-medium"
+                            class="flex items-center gap-3 text-slate-300 hover:text-white hover:translate-x-1 transition-all duration-300 font-medium group"
                           >
-                            <i class="fa-solid fa-chevron-left text-xs opacity-0 group-hover:opacity-100"></i>
+                            <span class="w-6 h-6 rounded-lg bg-white/10 group-hover:bg-linear-to-br group-hover:from-purple-500 group-hover:to-pink-500 flex items-center justify-center transition-all duration-300">
+                              <i
+                                class={`${link.icon} text-xs group-hover:text-white`}
+                              ></i>
+                            </span>
                             {link.label}
                           </a>
                         </li>
@@ -558,9 +686,13 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
                         <li>
                           <a
                             href={link.href}
-                            class="text-slate-300 hover:text-white hover:-translate-x-1.5 transition-all duration-300 inline-flex items-center gap-2 font-medium"
+                            class="flex items-center gap-3 text-slate-300 hover:text-white hover:translate-x-1 transition-all duration-300 font-medium group"
                           >
-                            <i class="fa-solid fa-chevron-left text-xs opacity-0 group-hover:opacity-100"></i>
+                            <span class="w-6 h-6 rounded-lg bg-white/10 group-hover:bg-linear-to-br group-hover:from-pink-500 group-hover:to-rose-500 flex items-center justify-center transition-all duration-300">
+                              <i
+                                class={`${link.icon} text-xs group-hover:text-white`}
+                              ></i>
+                            </span>
                             {link.label}
                           </a>
                         </li>
