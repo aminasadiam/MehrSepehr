@@ -482,7 +482,7 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
                     class="lg:hidden flex items-center gap-3 group"
                     aria-label="صفحه اصلی"
                   >
-                    <div class="w-14 h-14 rounded-2xl bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300">
+                    <div class="w-14 h-14 rounded-2xl bg-linear-to-br flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300">
                       <img
                         class="w-12 h-12 object-contain"
                         src="/assets/images/logos.png"
