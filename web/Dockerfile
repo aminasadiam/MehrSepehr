@@ -8,6 +8,6 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-EXPOSE 80
+EXPOSE 3030
 
-CMD [ "npm", "run", "serve", "--", "--port", "80" ]
+CMD [ "npm", "run", "serve", "--", "--port", "3030" ]
