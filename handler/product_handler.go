@@ -191,10 +191,20 @@ func (h *ProductHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	groupIDs := h.getUserGroupIDs(r)
+	// Check if user is authenticated
+	_, isAuthenticated := utils.GetUserFromContext(r.Context())
+
+	var groupIDs []uint
+	if isAuthenticated {
+		groupIDs = h.getUserGroupIDs(r)
+	}
 
 	for i := range products {
-		products[i].Price = h.getProductPrice(products[i].ID, groupIDs) // فیلد موقت برای نمایش
+		if isAuthenticated {
+			products[i].Price = h.getProductPrice(products[i].ID, groupIDs) // فیلد موقت برای نمایش
+		} else {
+			products[i].Price = 0 // Hide price for unauthenticated users
+		}
 	}
 
 	utils.JSONResponse(w, products, http.StatusOK)
@@ -213,11 +223,18 @@ func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	groupIDs := h.getUserGroupIDs(r)
-	product.Price = h.getProductPrice(product.ID, groupIDs)
-
 	// Preload روابط لازم
 	h.db.Preload("Images").Preload("Sizes").Preload("Colors").Preload("Prices").Find(&product)
+
+	// Check if user is authenticated
+	_, isAuthenticated := utils.GetUserFromContext(r.Context())
+
+	if isAuthenticated {
+		groupIDs := h.getUserGroupIDs(r)
+		product.Price = h.getProductPrice(product.ID, groupIDs)
+	} else {
+		product.Price = 0 // Hide price for unauthenticated users
+	}
 
 	utils.JSONResponse(w, product, http.StatusOK)
 }
@@ -373,7 +390,7 @@ func (h *ProductHandler) UploadImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	imageURL := "http://localhost:8080/assets/products/" + filename
+	imageURL := "http://localhost:3000/assets/products/" + filename
 	isPrimary := r.FormValue("is_primary") == "true"
 	order, _ := strconv.Atoi(r.FormValue("order"))
 

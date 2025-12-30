@@ -97,45 +97,99 @@ const Products: Component = () => {
     });
   };
 
-  const startEdit = (p: any) => {
-    setEditId(p.ID ?? p.id);
-    setFormData({
-      name: p.Name ?? p.name ?? "",
-      description: p.Description ?? p.description ?? "",
-      sku: p.SKU ?? p.sku ?? "",
-      stock: String(p.Stock ?? p.stock ?? 0),
-      modelNumber: p.ModelNumber ?? p.model_number ?? "",
-      warranty: p.Warranty ?? p.warranty ?? "",
-      weight: p.Weight ? String(p.Weight) : p.weight ? String(p.weight) : "",
-      dimensions: p.Dimensions ?? p.dimensions ?? "",
-      power: p.Power ?? p.power ?? "",
-      material: p.Material ?? p.material ?? "",
-      capacity: p.Capacity ?? p.capacity ?? "",
-      features: p.Features ?? p.features ?? "",
-      isActive: p.IsActive ?? p.is_active ?? true,
-      categoryId: p.CategoryID ?? p.category_id ?? null,
-      brandId: p.BrandID ?? p.brand_id ?? null,
-      groups: (p.Groups || []).map((g: any) => g.ID ?? g.id),
-      images: (p.Images || []).map((img: any) => ({
-        file: null,
-        url: img.URL ?? img.url,
-        alt: img.Alt ?? img.alt ?? "",
-        isPrimary: img.IsPrimary ?? img.is_primary ?? false,
-        order: img.Order ?? img.order ?? 0,
-        preview: img.URL ?? img.url,
-      })),
-      sizes: (p.Sizes || []).map((s: any) => ({
-        name: s.Name ?? s.name ?? "",
-        stock: s.Stock ?? s.stock ?? 0,
-        price: s.Price ?? s.price ?? "",
-      })),
-      colors: (p.Colors || []).map((c: any) => ({
-        name: c.Name ?? c.name ?? "",
-        hexCode: c.HexCode ?? c.hex_code ?? "",
-        stock: c.Stock ?? c.stock ?? 0,
-      })),
-    });
-    setShowCreate(true);
+  const startEdit = async (p: any) => {
+    // Fetch full product details to ensure Groups are preloaded
+    try {
+      const productId = p.ID ?? p.id;
+      const fullProduct = await productsApi.getById(productId);
+      const prod = fullProduct.data || p;
+
+      setEditId(productId);
+      setFormData({
+        name: prod.Name ?? prod.name ?? "",
+        description: prod.Description ?? prod.description ?? "",
+        sku: prod.SKU ?? prod.sku ?? "",
+        stock: String(prod.Stock ?? prod.stock ?? 0),
+        modelNumber: prod.ModelNumber ?? prod.model_number ?? "",
+        warranty: prod.Warranty ?? prod.warranty ?? "",
+        weight: prod.Weight
+          ? String(prod.Weight)
+          : prod.weight
+          ? String(prod.weight)
+          : "",
+        dimensions: prod.Dimensions ?? prod.dimensions ?? "",
+        power: prod.Power ?? prod.power ?? "",
+        material: prod.Material ?? prod.material ?? "",
+        capacity: prod.Capacity ?? prod.capacity ?? "",
+        features: prod.Features ?? prod.features ?? "",
+        isActive: prod.IsActive ?? prod.is_active ?? true,
+        categoryId: prod.CategoryID ?? prod.category_id ?? null,
+        brandId: prod.BrandID ?? prod.brand_id ?? null,
+        groups: (prod.Groups || prod.groups || []).map(
+          (g: any) => g.ID ?? g.id
+        ),
+        images: (prod.Images || prod.images || []).map((img: any) => ({
+          file: null,
+          url: img.URL ?? img.url,
+          alt: img.Alt ?? img.alt ?? "",
+          isPrimary: img.IsPrimary ?? img.is_primary ?? false,
+          order: img.Order ?? img.order ?? 0,
+          preview: img.URL ?? img.url,
+        })),
+        sizes: (prod.Sizes || prod.sizes || []).map((s: any) => ({
+          name: s.Name ?? s.name ?? "",
+          stock: s.Stock ?? s.stock ?? 0,
+          price: s.Price ?? s.price ?? "",
+        })),
+        colors: (prod.Colors || prod.colors || []).map((c: any) => ({
+          name: c.Name ?? c.name ?? "",
+          hexCode: c.HexCode ?? c.hex_code ?? "",
+          stock: c.Stock ?? c.stock ?? 0,
+        })),
+      });
+      setShowCreate(true);
+    } catch (err) {
+      console.error("Error fetching product details:", err);
+      // Fallback to original data if fetch fails
+      setEditId(p.ID ?? p.id);
+      setFormData({
+        name: p.Name ?? p.name ?? "",
+        description: p.Description ?? p.description ?? "",
+        sku: p.SKU ?? p.sku ?? "",
+        stock: String(p.Stock ?? p.stock ?? 0),
+        modelNumber: p.ModelNumber ?? p.model_number ?? "",
+        warranty: p.Warranty ?? p.warranty ?? "",
+        weight: p.Weight ? String(p.Weight) : p.weight ? String(p.weight) : "",
+        dimensions: p.Dimensions ?? p.dimensions ?? "",
+        power: p.Power ?? p.power ?? "",
+        material: p.Material ?? p.material ?? "",
+        capacity: p.Capacity ?? p.capacity ?? "",
+        features: p.Features ?? p.features ?? "",
+        isActive: p.IsActive ?? p.is_active ?? true,
+        categoryId: p.CategoryID ?? p.category_id ?? null,
+        brandId: p.BrandID ?? p.brand_id ?? null,
+        groups: (p.Groups || p.groups || []).map((g: any) => g.ID ?? g.id),
+        images: (p.Images || p.images || []).map((img: any) => ({
+          file: null,
+          url: img.URL ?? img.url,
+          alt: img.Alt ?? img.alt ?? "",
+          isPrimary: img.IsPrimary ?? img.is_primary ?? false,
+          order: img.Order ?? img.order ?? 0,
+          preview: img.URL ?? img.url,
+        })),
+        sizes: (p.Sizes || p.sizes || []).map((s: any) => ({
+          name: s.Name ?? s.name ?? "",
+          stock: s.Stock ?? s.stock ?? 0,
+          price: s.Price ?? s.price ?? "",
+        })),
+        colors: (p.Colors || p.colors || []).map((c: any) => ({
+          name: c.Name ?? c.name ?? "",
+          hexCode: c.HexCode ?? c.hex_code ?? "",
+          stock: c.Stock ?? c.stock ?? 0,
+        })),
+      });
+      setShowCreate(true);
+    }
   };
 
   const addImage = () => {

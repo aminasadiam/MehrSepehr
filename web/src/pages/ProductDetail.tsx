@@ -210,9 +210,18 @@ const ProductDetail = () => {
                       {prod().name}
                     </h1>
                     <div class="flex items-baseline gap-3">
-                      <p class="text-4xl font-bold text-indigo-600">
-                        {formatPrice(currentPrice())}
-                      </p>
+                      <Show
+                        when={auth.isAuthenticated() || currentPrice() > 0}
+                        fallback={
+                          <p class="text-sm font-bold text-amber-600">
+                            برای مشاهده قیمت وارد شوید
+                          </p>
+                        }
+                      >
+                        <p class="text-4xl font-bold text-indigo-600">
+                          {formatPrice(currentPrice())}
+                        </p>
+                      </Show>
                       <Show when={currentStock() > 0}>
                         <span class="text-sm font-bold text-green-600 bg-green-100 px-3 py-1 rounded-full">
                           ✓ موجود
@@ -454,13 +463,20 @@ const ProductDetail = () => {
                     <button
                       class="w-full py-4 bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
                       disabled={
-                        currentStock() === 0 || quantity() > currentStock()
+                        currentStock() === 0 ||
+                        quantity() > currentStock() ||
+                        !auth.isAuthenticated()
                       }
                       onClick={handleAddToOrder}
                     >
                       <span>🛒</span>
-                      افزودن به سفارش (
-                      {formatPrice(currentPrice() * quantity())})
+                      <Show
+                        when={auth.isAuthenticated()}
+                        fallback="برای خرید وارد شوید"
+                      >
+                        افزودن به سفارش (
+                        {formatPrice(currentPrice() * quantity())})
+                      </Show>
                     </button>
                   </div>
                 </div>

@@ -67,10 +67,10 @@ func Serve(cfg *config.Configuration) error {
 	mux.Handle("POST /api/users/{id}/avatar", authMiddleware(http.HandlerFunc(userHandler.UploadAvatar)))
 
 	// --------------------
-	// Product routes (authenticated, admin for create/update/delete)
+	// Product routes (public for get, authenticated admin for create/update/delete)
 	// --------------------
-	mux.Handle("GET /api/products", authMiddleware(http.HandlerFunc(productHandler.GetAll)))
-	mux.Handle("GET /api/products/{id}", authMiddleware(http.HandlerFunc(productHandler.GetByID)))
+	mux.Handle("GET /api/products", http.HandlerFunc(productHandler.GetAll))
+	mux.Handle("GET /api/products/{id}", http.HandlerFunc(productHandler.GetByID))
 	mux.Handle("POST /api/products", authMiddleware(adminMiddleware(http.HandlerFunc(productHandler.Create))))
 	mux.Handle("PUT /api/products/{id}", authMiddleware(adminMiddleware(http.HandlerFunc(productHandler.Update))))
 	mux.Handle("DELETE /api/products/{id}", authMiddleware(adminMiddleware(http.HandlerFunc(productHandler.Delete))))
@@ -89,10 +89,10 @@ func Serve(cfg *config.Configuration) error {
 	mux.Handle("DELETE /api/admin/categories/{id}", authMiddleware(adminMiddleware(http.HandlerFunc(categoryHandler.Delete))))
 
 	// --------------------
-	// Brand routes
+	// Brand routes (public for get, authenticated admin for create/update/delete)
 	// --------------------
-	mux.Handle("GET /api/brands", authMiddleware(http.HandlerFunc(brandHandler.GetAll)))
-	mux.Handle("GET /api/brands/{id}", authMiddleware(http.HandlerFunc(brandHandler.GetByID)))
+	mux.Handle("GET /api/brands", http.HandlerFunc(brandHandler.GetAll))
+	mux.Handle("GET /api/brands/{id}", http.HandlerFunc(brandHandler.GetByID))
 	mux.Handle("POST /api/brands", authMiddleware(adminMiddleware(http.HandlerFunc(brandHandler.Create))))
 	mux.Handle("PUT /api/brands/{id}", authMiddleware(adminMiddleware(http.HandlerFunc(brandHandler.Update))))
 	mux.Handle("DELETE /api/brands/{id}", authMiddleware(adminMiddleware(http.HandlerFunc(brandHandler.Delete))))
@@ -158,6 +158,17 @@ func Serve(cfg *config.Configuration) error {
 	mux.Handle("GET /assets/avatar/",
 		http.StripPrefix("/assets/avatar/",
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Add CORS headers
+				w.Header().Set("Access-Control-Allow-Origin", "*")
+				w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+				w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+				
+				// Handle OPTIONS requests
+				if r.Method == "OPTIONS" {
+					w.WriteHeader(http.StatusOK)
+					return
+				}
+				
 				ext := strings.ToLower(filepath.Ext(r.URL.Path))
 				switch ext {
 				case ".png", ".jpg", ".jpeg", ".webp":
@@ -178,6 +189,17 @@ func Serve(cfg *config.Configuration) error {
 	mux.Handle("GET /assets/products/",
 		http.StripPrefix("/assets/products/",
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Add CORS headers
+				w.Header().Set("Access-Control-Allow-Origin", "*")
+				w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+				w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+				
+				// Handle OPTIONS requests
+				if r.Method == "OPTIONS" {
+					w.WriteHeader(http.StatusOK)
+					return
+				}
+				
 				ext := strings.ToLower(filepath.Ext(r.URL.Path))
 				switch ext {
 				case ".png", ".jpg", ".jpeg", ".webp", ".gif", ".avif":

@@ -21,6 +21,10 @@ const Users: Component = () => {
   const [selectedRoles, setSelectedRoles] = createSignal<number[]>([]);
   const [selectedGroups, setSelectedGroups] = createSignal<number[]>([]);
 
+  // Helper to get ID safely (handles both id and ID)
+  const getId = (obj: any): number => obj.id || obj.ID || 0;
+  const getName = (obj: any): string => obj.name || obj.Name || "";
+
   const load = async () => {
     setLoading(true);
     try {
@@ -63,8 +67,12 @@ const Users: Component = () => {
 
   const startEdit = (user: any) => {
     setEditing(user);
-    setSelectedRoles(user.Roles?.map((r: any) => r.id) || []);
-    setSelectedGroups(user.Groups?.map((g: any) => g.id) || []);
+    setSelectedRoles(
+      (user.Roles || user.roles || []).map((r: any) => r.id || r.ID) || []
+    );
+    setSelectedGroups(
+      (user.Groups || user.groups || []).map((g: any) => g.id || g.ID) || []
+    );
     setShowEdit(true);
   };
 
@@ -77,7 +85,9 @@ const Users: Component = () => {
         phone: editing().phone,
       });
 
-      const currentRoles = editing().Roles?.map((r: any) => r.id) || [];
+      const currentRoles = (editing().Roles || editing().roles || []).map(
+        (r: any) => getId(r)
+      );
       for (const rid of selectedRoles()) {
         if (!currentRoles.includes(rid)) {
           await usersApi.addRole(editing().id, rid);
@@ -89,7 +99,9 @@ const Users: Component = () => {
         }
       }
 
-      const currentGroups = editing().Groups?.map((g: any) => g.id) || [];
+      const currentGroups = (editing().Groups || editing().groups || []).map(
+        (g: any) => getId(g)
+      );
       for (const gid of selectedGroups()) {
         if (!currentGroups.includes(gid)) {
           await groupsApi.addUser(gid, editing().id);
@@ -507,20 +519,25 @@ const Users: Component = () => {
                       <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-sky-50 transition-colors border border-sky-100 hover:border-sky-300">
                         <input
                           type="checkbox"
-                          checked={selectedRoles().includes(role.id)}
+                          checked={selectedRoles().includes(getId(role))}
                           onChange={(e) => {
                             if (e.currentTarget.checked) {
-                              setSelectedRoles([...selectedRoles(), role.id]);
+                              setSelectedRoles([
+                                ...selectedRoles(),
+                                getId(role),
+                              ]);
                             } else {
                               setSelectedRoles(
-                                selectedRoles().filter((id) => id !== role.id)
+                                selectedRoles().filter(
+                                  (id) => id !== getId(role)
+                                )
                               );
                             }
                           }}
                           class="w-4 h-4 rounded border-sky-300 cursor-pointer accent-sky-600"
                         />
                         <span class="text-sm font-medium text-slate-700">
-                          {role.name}
+                          {getName(role)}
                         </span>
                       </label>
                     )}
@@ -543,23 +560,25 @@ const Users: Component = () => {
                       <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-green-50 transition-colors border border-green-100 hover:border-green-300">
                         <input
                           type="checkbox"
-                          checked={selectedGroups().includes(group.id)}
+                          checked={selectedGroups().includes(getId(group))}
                           onChange={(e) => {
                             if (e.currentTarget.checked) {
                               setSelectedGroups([
                                 ...selectedGroups(),
-                                group.id,
+                                getId(group),
                               ]);
                             } else {
                               setSelectedGroups(
-                                selectedGroups().filter((id) => id !== group.id)
+                                selectedGroups().filter(
+                                  (id) => id !== getId(group)
+                                )
                               );
                             }
                           }}
                           class="w-4 h-4 rounded border-green-300 cursor-pointer accent-green-600"
                         />
                         <span class="text-sm font-medium text-slate-700">
-                          {group.name}
+                          {getName(group)}
                         </span>
                       </label>
                     )}

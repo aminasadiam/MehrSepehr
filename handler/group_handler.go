@@ -101,7 +101,11 @@ func (h *GroupHandler) AddProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.repo.AddProduct(uint(groupID), body.ProductID); err != nil {
-		utils.ErrorResponse(w, "Failed to add product to group: "+err.Error(), http.StatusInternalServerError)
+		if err.Error() == "duplicated key" {
+			utils.ErrorResponse(w, "This product is already in the group", http.StatusConflict)
+		} else {
+			utils.ErrorResponse(w, "Failed to add product to group: "+err.Error(), http.StatusInternalServerError)
+		}
 		return
 	}
 	utils.SuccessResponse(w, "Product added to group", nil, http.StatusOK)
@@ -161,7 +165,11 @@ func (h *GroupHandler) AddUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.repo.AddUser(uint(groupID), body.UserID); err != nil {
-		utils.ErrorResponse(w, "Failed to add user to group: "+err.Error(), http.StatusInternalServerError)
+		if err.Error() == "duplicated key" {
+			utils.ErrorResponse(w, "This user is already in the group", http.StatusConflict)
+		} else {
+			utils.ErrorResponse(w, "Failed to add user to group: "+err.Error(), http.StatusInternalServerError)
+		}
 		return
 	}
 	utils.SuccessResponse(w, "User added to group", nil, http.StatusOK)

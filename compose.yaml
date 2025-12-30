@@ -1,0 +1,46 @@
+services:
+  backend:
+    build: .
+    container_name: Mehrsepehr_Backend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - database
+    environment:
+      - DSN=host=database user=postgres password=19045522 dbname=mehrsepehr_db port=5432 sslmode=disable
+      - ALLOWED_ORIGINS=http://localhost:3030
+      - JWT_SECRET=Kasra-Secret-Key
+      - PORT=3000
+  
+  frontend:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: Mehrsepehr_Frontend
+    ports:
+      - "3030:3030"
+
+  database:
+    container_name: postgres_database
+    image: postgres:latest
+    restart: always
+    shm_size: 128mb
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 19045522
+      POSTGRES_DB: mehrsepehr_db
+
+  adminer:
+    container_name: postgres_adminer
+    image: adminer
+    restart: always
+    ports:
+      - "8080:8080"

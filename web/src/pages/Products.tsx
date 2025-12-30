@@ -317,9 +317,18 @@ const Products = () => {
                         )}
 
                         <div class="flex items-center justify-between mb-3 pt-3 border-t border-slate-100">
-                          <span class="text-base font-bold text-blue-600">
-                            {formatPrice(displayPrice)}
-                          </span>
+                          <Show
+                            when={auth.isAuthenticated() || displayPrice > 0}
+                            fallback={
+                              <span class="text-sm font-bold text-amber-600">
+                                برای مشاهده قیمت وارد شوید
+                              </span>
+                            }
+                          >
+                            <span class="text-base font-bold text-blue-600">
+                              {formatPrice(displayPrice)}
+                            </span>
+                          </Show>
                           <Show when={product.stock > 0}>
                             <span class="flex items-center gap-1 text-xs text-green-600 font-bold bg-green-50 px-2 py-1 rounded">
                               <i class="fa-solid fa-check-circle"></i>

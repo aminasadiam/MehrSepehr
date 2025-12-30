@@ -19,7 +19,7 @@ func (r *UserRepository) Create(model *models.User) error {
 
 func (r *UserRepository) GetByID(id uint) (*models.User, error) {
 	var user models.User
-	err := r.db.Preload("Roles").Preload("Roles.Permissions").Preload("Wallet").First(&user, id).Error
+	err := r.db.Preload("Roles").Preload("Roles.Permissions").Preload("Groups").Preload("Wallet").First(&user, id).Error
 	return &user, err
 }
 
@@ -37,7 +37,7 @@ func (r *UserRepository) GetByUsername(username string) (*models.User, error) {
 
 func (r *UserRepository) GetAll() ([]models.User, error) {
 	var users []models.User
-	err := r.db.Preload("Roles").Preload("Wallet").Find(&users).Error
+	err := r.db.Preload("Roles").Preload("Groups").Preload("Wallet").Find(&users).Error
 	return users, err
 }
 

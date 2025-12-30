@@ -48,6 +48,14 @@ func (r *GroupRepository) AddProduct(groupID, productID uint) error {
 	if err := r.db.Where("id = ?", groupID).First(&models.Group{}).Error; err != nil {
 		return err
 	}
+	// Check if product is already in group
+	var count int64
+	if err := r.db.Table("group_products").Where("group_id = ? AND product_id = ?", groupID, productID).Count(&count).Error; err != nil {
+		return err
+	}
+	if count > 0 {
+		return gorm.ErrDuplicatedKey
+	}
 	// Add to many-to-many table without modifying products table
 	return r.db.Table("group_products").Create(map[string]interface{}{"group_id": groupID, "product_id": productID}).Error
 }
@@ -68,6 +76,14 @@ func (r *GroupRepository) AddUser(groupID, userID uint) error {
 	}
 	if err := r.db.Where("id = ?", groupID).First(&models.Group{}).Error; err != nil {
 		return err
+	}
+	// Check if user is already in group
+	var count int64
+	if err := r.db.Table("user_groups").Where("group_id = ? AND user_id = ?", groupID, userID).Count(&count).Error; err != nil {
+		return err
+	}
+	if count > 0 {
+		return gorm.ErrDuplicatedKey
 	}
 	// Add to many-to-many table without modifying users table
 	return r.db.Table("user_groups").Create(map[string]interface{}{"group_id": groupID, "user_id": userID}).Error
