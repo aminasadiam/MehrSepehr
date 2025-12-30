@@ -1,6 +1,6 @@
 // api.ts کامل و اصلاح‌شده
-const API_BASE_URL = "http://localhost:3000/api";
-const BASE_URL = "http://localhost:3000";
+const API_BASE_URL = "http://185.94.98.2:3000/api";
+const BASE_URL = "http://185.94.98.2:3000";
 
 // Utility function to build image URLs
 export const getImageUrl = (path: string | undefined): string => {

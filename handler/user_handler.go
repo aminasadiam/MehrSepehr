@@ -78,7 +78,7 @@ func (h *UserHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Use a relative path so frontend can resolve with its configured BASE_URL
-	existing.Avatar = "http://localhost:3000/assets/avatar/" + filename
+	existing.Avatar = "http://185.94.98.2:3000/assets/avatar/" + filename
 	if err := h.userRepo.Update(existing); err != nil {
 		utils.ErrorResponse(w, "Failed to update user avatar", http.StatusInternalServerError)
 		return
@@ -135,7 +135,7 @@ func (h *UserHandler) AdminUploadAvatar(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	// Use relative path for avatars
-	existing.Avatar = "http://localhost:3000/assets/avatar/" + filename
+	existing.Avatar = "http://185.94.98.2:3000/assets/avatar/" + filename
 	if err := h.userRepo.Update(existing); err != nil {
 		utils.ErrorResponse(w, "Failed to update user avatar", http.StatusInternalServerError)
 		return
