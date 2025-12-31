@@ -162,13 +162,13 @@ func Serve(cfg *config.Configuration) error {
 				w.Header().Set("Access-Control-Allow-Origin", "*")
 				w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 				w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-				
+
 				// Handle OPTIONS requests
 				if r.Method == "OPTIONS" {
 					w.WriteHeader(http.StatusOK)
 					return
 				}
-				
+
 				ext := strings.ToLower(filepath.Ext(r.URL.Path))
 				switch ext {
 				case ".png", ".jpg", ".jpeg", ".webp":
@@ -193,13 +193,13 @@ func Serve(cfg *config.Configuration) error {
 				w.Header().Set("Access-Control-Allow-Origin", "*")
 				w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 				w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-				
+
 				// Handle OPTIONS requests
 				if r.Method == "OPTIONS" {
 					w.WriteHeader(http.StatusOK)
 					return
 				}
-				
+
 				ext := strings.ToLower(filepath.Ext(r.URL.Path))
 				switch ext {
 				case ".png", ".jpg", ".jpeg", ".webp", ".gif", ".avif":
@@ -218,6 +218,9 @@ func Serve(cfg *config.Configuration) error {
 	httpHandler := middleware.ErrorHandler(mux)
 	httpHandler = middleware.CORS(cfg)(httpHandler)
 
-	log.Printf("Server Started at %s\n", cfg.Port)
-	return http.ListenAndServe(cfg.Port, httpHandler)
+	log.Printf("Server Started at %s (HTTPS)\n", cfg.Port)
+	go http.ListenAndServe(cfg.Port, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "https://"+r.Host+r.RequestURI, http.StatusMovedPermanently)
+	}))
+	return http.ListenAndServeTLS(cfg.Port, "cert.pem", "key.pem", httpHandler)
 }
