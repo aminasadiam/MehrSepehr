@@ -12,6 +12,7 @@ export default defineConfig({
   preview: {
     host: true,
     port: 3030,
+    allowedHosts: ["mehrsepehr.com"],
   },
   build: {
     target: "esnext",

@@ -8,7 +8,7 @@ services:
       - database
     environment:
       - DSN=host=database user=postgres password=19045522 dbname=mehrsepehr_db port=5432 sslmode=disable
-      - ALLOWED_ORIGINS=http://185.94.98.2:3030
+      - ALLOWED_ORIGINS=https://mehrsepehr.com
       - JWT_SECRET=Kasra-Secret-Key
       - PORT=3000
   
