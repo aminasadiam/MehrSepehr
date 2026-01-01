@@ -219,8 +219,8 @@ func Serve(cfg *config.Configuration) error {
 	httpHandler = middleware.CORS(cfg)(httpHandler)
 
 	log.Printf("Server Started at %s (HTTPS)\n", cfg.Port)
-	go http.ListenAndServe(cfg.Port, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "https://"+r.Host+r.RequestURI, http.StatusMovedPermanently)
-	}))
-	return http.ListenAndServeTLS(cfg.Port, "cert.pem", "key.pem", httpHandler)
+	// Running behind a reverse proxy (nginx) which terminates TLS.
+	// Serve plain HTTP on the configured port and let the proxy handle HTTPS.
+	log.Printf("Server listening (HTTP) on %s\n", cfg.Port)
+	return http.ListenAndServe(cfg.Port, httpHandler)
 }
