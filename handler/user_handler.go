@@ -78,7 +78,7 @@ func (h *UserHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Use HTTPS through nginx proxy
-	existing.Avatar = "https://mehrsepehr.com/assets/avatar/" + filename
+	existing.Avatar = "https://mehrsepehr.com/api/assets/avatar/" + filename
 	if err := h.userRepo.Update(existing); err != nil {
 		utils.ErrorResponse(w, "Failed to update user avatar", http.StatusInternalServerError)
 		return
@@ -135,7 +135,7 @@ func (h *UserHandler) AdminUploadAvatar(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	// Use HTTPS through nginx proxy
-	existing.Avatar = "https://mehrsepehr.com/assets/avatar/" + filename
+	existing.Avatar = "https://mehrsepehr.com/api/assets/avatar/" + filename
 	if err := h.userRepo.Update(existing); err != nil {
 		utils.ErrorResponse(w, "Failed to update user avatar", http.StatusInternalServerError)
 		return
