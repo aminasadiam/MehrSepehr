@@ -39,6 +39,11 @@ func Serve(cfg *config.Configuration) error {
 	mux.HandleFunc("GET /", handler.Index)
 	mux.HandleFunc("POST /api/auth/register", authHandler.Register)
 	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
+	mux.HandleFunc("GET /api/auth/login", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"message":"GET /api/auth/login (debug route)"}`))
+	})
 
 	// --------------------
 	// Middleware
