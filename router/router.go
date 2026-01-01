@@ -161,7 +161,7 @@ func Serve(cfg *config.Configuration) error {
 	avatarFS := http.FileServer(http.Dir("./uploads/avatars"))
 
 	mux.Handle("GET /api/assets/avatar/",
-		http.StripPrefix("/assets/avatar/",
+		http.StripPrefix("/api/assets/avatar/",
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				// Add CORS headers
 				w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -192,7 +192,7 @@ func Serve(cfg *config.Configuration) error {
 	productImagesFS := http.FileServer(http.Dir("./uploads/products"))
 
 	mux.Handle("GET /api/assets/products/",
-		http.StripPrefix("/assets/products/",
+		http.StripPrefix("/api/assets/products/",
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				// Add CORS headers
 				w.Header().Set("Access-Control-Allow-Origin", "*")
