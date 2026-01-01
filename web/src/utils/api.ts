@@ -1,6 +1,6 @@
 // api.ts کامل و اصلاح‌شده
-const API_BASE_URL = "http://mehrsepehr.com:3000/api";
-const BASE_URL = "http://mehrsepehr.com:3000/";
+const API_BASE_URL = "127.0.0.1:3000/api";
+const BASE_URL = "127.0.0.1:3000/";
 
 // Utility function to build image URLs
 export const getImageUrl = (path: string | undefined): string => {
