@@ -77,8 +77,8 @@ func (h *UserHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorResponse(w, "User not found", http.StatusNotFound)
 		return
 	}
-	// Use a relative path so frontend can resolve with its configured BASE_URL
-	existing.Avatar = "http://mehrsepehr.com:3000/assets/avatar/" + filename
+	// Use HTTPS through nginx proxy
+	existing.Avatar = "https://mehrsepehr.com/assets/avatar/" + filename
 	if err := h.userRepo.Update(existing); err != nil {
 		utils.ErrorResponse(w, "Failed to update user avatar", http.StatusInternalServerError)
 		return
@@ -134,8 +134,8 @@ func (h *UserHandler) AdminUploadAvatar(w http.ResponseWriter, r *http.Request) 
 		utils.ErrorResponse(w, "User not found", http.StatusNotFound)
 		return
 	}
-	// Use relative path for avatars
-	existing.Avatar = "http://mehrsepehr.com:3000/assets/avatar/" + filename
+	// Use HTTPS through nginx proxy
+	existing.Avatar = "https://mehrsepehr.com/assets/avatar/" + filename
 	if err := h.userRepo.Update(existing); err != nil {
 		utils.ErrorResponse(w, "Failed to update user avatar", http.StatusInternalServerError)
 		return

@@ -390,7 +390,7 @@ func (h *ProductHandler) UploadImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	imageURL := "http://mehrsepehr.com:3000/assets/products/" + filename
+	imageURL := "https://mehrsepehr.com/assets/products/" + filename
 	isPrimary := r.FormValue("is_primary") == "true"
 	order, _ := strconv.Atoi(r.FormValue("order"))
 
