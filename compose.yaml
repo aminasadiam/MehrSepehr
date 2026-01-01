@@ -44,3 +44,26 @@ services:
     restart: always
     ports:
       - "8080:8080"
+
+  nginx:
+    image: nginx:alpine
+    container_name: Mehrsepehr_Nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/html:/var/www/certbot
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - backend
+      - frontend
+
+  certbot:
+    image: certbot/certbot
+    container_name: Mehrsepehr_Certbot
+    volumes:
+      - ./nginx/html:/var/www/certbot
+      - /etc/letsencrypt:/etc/letsencrypt
+    entrypoint: ""
+    command: ["sleep", "infinity"]
