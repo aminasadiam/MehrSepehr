@@ -2,10 +2,12 @@ services:
   backend:
     build: .
     container_name: Mehrsepehr_Backend
+    restart: on-failure
     ports:
       - "3000:3000"
     depends_on:
-      - database
+      database:
+        condition: service_healthy
     environment:
       - DSN=host=database user=postgres password=19045522 dbname=mehrsepehr_db port=5432 sslmode=disable
       - ALLOWED_ORIGINS=https://mehrsepehr.com
