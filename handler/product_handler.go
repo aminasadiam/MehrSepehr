@@ -191,35 +191,56 @@ func (h *ProductHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if user is authenticated
-	_, isAuthenticated := utils.GetUserFromContext(r.Context())
+	// Check if user is authenticated and get their roles/groups
+	claims, isAuthenticated := utils.GetUserFromContext(r.Context())
 
+	var isAdmin bool
 	var groupIDs []uint
+
 	if isAuthenticated {
-		groupIDs = h.getUserGroupIDs(r)
-	}
-
-	// Filter products based on user groups
-	var filteredProducts []models.Product
-	for _, product := range products {
-		// If product has no group restrictions, show to everyone
-		if len(product.Groups) == 0 {
-			filteredProducts = append(filteredProducts, product)
-			continue
-		}
-
-		// If product has group restrictions, only show if user is in one of those groups
-		if isAuthenticated {
-			for _, productGroup := range product.Groups {
-				for _, userGroupID := range groupIDs {
-					if productGroup.ID == userGroupID {
-						filteredProducts = append(filteredProducts, product)
-						break
-					}
+		// Check if user is admin
+		var user models.User
+		if err := h.db.Preload("Roles").First(&user, claims.UserID).Error; err == nil {
+			for _, role := range user.Roles {
+				if role.Name == "admin" || role.Name == "administrator" {
+					isAdmin = true
+					break
 				}
 			}
 		}
-		// If product has group restrictions and user is not authenticated, don't show it
+
+		// Get user's group IDs (not needed if admin)
+		if !isAdmin {
+			groupIDs = h.getUserGroupIDs(r)
+		}
+	}
+
+	// Filter products based on user groups (skip for admins)
+	var filteredProducts []models.Product
+	if isAdmin {
+		// Admins see all products
+		filteredProducts = products
+	} else {
+		for _, product := range products {
+			// If product has no group restrictions, show to everyone
+			if len(product.Groups) == 0 {
+				filteredProducts = append(filteredProducts, product)
+				continue
+			}
+
+			// If product has group restrictions, only show if user is in one of those groups
+			if isAuthenticated {
+				for _, productGroup := range product.Groups {
+					for _, userGroupID := range groupIDs {
+						if productGroup.ID == userGroupID {
+							filteredProducts = append(filteredProducts, product)
+							break
+						}
+					}
+				}
+			}
+			// If product has group restrictions and user is not authenticated, don't show it
+		}
 	}
 
 	// Set prices to 0 for all (removing price display from response)
