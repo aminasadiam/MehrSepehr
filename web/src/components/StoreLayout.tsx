@@ -468,7 +468,7 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
                 {/* Mobile Menu & Logo */}
                 <div class="flex items-center gap-3">
                   <button
-                    class="lg:hidden w-12 h-12 rounded-2xl bg-slate-100 hover:bg-linear-to-br hover:from-indigo-500 hover:to-purple-600 hover:text-white flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-md hover:shadow-xl"
+                    class="lg:hidden w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-slate-100 hover:bg-linear-to-br hover:from-indigo-500 hover:to-purple-600 hover:text-white flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-md hover:shadow-xl"
                     type="button"
                     aria-controls="mainSidebar"
                     aria-expanded={!isDesktop() && isSidebarOpen()}
@@ -482,14 +482,14 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
                     class="lg:hidden flex items-center gap-3 group"
                     aria-label="صفحه اصلی"
                   >
-                    <div class="w-14 h-14 rounded-2xl bg-linear-to-br flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300">
+                    <div class="w-10 h-10 sm:w-14 sm:h-14 rounded-2xl bg-linear-to-br flex items-center justify-center shadow-lg group-hover:shadow-2xl group-hover:scale-105 transition-all duration-300">
                       <img
-                        class="w-12 h-12 object-contain"
+                        class="w-8 h-8 sm:w-12 sm:h-12 object-contain"
                         src="/assets/images/logos.png"
                         alt="لوگو مهر سپهر"
                       />
                     </div>
-                    <span class="font-extrabold text-xl text-slate-900">
+                    <span class="font-extrabold text-base sm:text-xl text-slate-900 hidden sm:inline">
                       مهر سپهر
                     </span>
                   </A>
@@ -497,7 +497,7 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
 
                 {/* Search Bar */}
                 <label
-                  class="relative flex-1 min-w-[220px] lg:max-w-2xl"
+                  class="relative flex-1 min-w-[120px] sm:min-w-[220px] lg:max-w-2xl"
                   for="headerSearch"
                 >
                   <input
@@ -512,12 +512,12 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
                       }
                     }}
                     placeholder="جستجو محصولات، برند یا دسته‌بندی..."
-                    class="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 hover:bg-white hover:border-indigo-300 focus:bg-white focus:border-indigo-500 py-3.5 pl-14 pr-5 text-sm transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-100 shadow-sm hover:shadow-md"
+                    class="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 hover:bg-white hover:border-indigo-300 focus:bg-white focus:border-indigo-500 py-2.5 sm:py-3.5 pl-12 sm:pl-14 pr-4 sm:pr-5 text-sm transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-100 shadow-sm hover:shadow-md"
                   />
                   <button
                     type="button"
                     aria-label="جستجو"
-                    class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors"
+                    class="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors"
                     onClick={handleSearch}
                   >
                     <i class="fa-solid fa-magnifying-glass text-lg"></i>
@@ -538,8 +538,8 @@ const StoreLayout: Component<StoreLayoutProps> = (props) => {
                       </A>
                     }
                   >
-                    <div class="flex items-center gap-3 bg-linear-to-l from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-2xl px-5 py-3 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105">
-                      <div class="w-12 h-12 rounded-full overflow-hidden shadow-lg bg-slate-200 flex items-center justify-center">
+                    <div class="flex items-center gap-3 bg-linear-to-l from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-2xl px-3 sm:px-5 py-2.5 sm:py-3 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105">
+                      <div class="w-8 h-8 sm:w-12 sm:h-12 rounded-full overflow-hidden shadow-lg bg-slate-200 flex items-center justify-center">
                         <Show
                           when={avatarUrl()}
                           fallback={

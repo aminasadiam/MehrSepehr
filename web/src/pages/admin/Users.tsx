@@ -79,7 +79,7 @@ const Users: Component = () => {
   const saveEdit = async () => {
     if (!editing()) return;
     try {
-      await usersApi.update(editing().id, {
+      await usersApi.update(getId(editing()), {
         username: editing().username,
         email: editing().email,
         phone: editing().phone,
@@ -90,12 +90,12 @@ const Users: Component = () => {
       );
       for (const rid of selectedRoles()) {
         if (!currentRoles.includes(rid)) {
-          await usersApi.addRole(editing().id, rid);
+          await usersApi.addRole(getId(editing()), rid);
         }
       }
       for (const rid of currentRoles) {
         if (!selectedRoles().includes(rid)) {
-          await usersApi.removeRole(editing().id, rid);
+          await usersApi.removeRole(getId(editing()), rid);
         }
       }
 
@@ -104,12 +104,12 @@ const Users: Component = () => {
       );
       for (const gid of selectedGroups()) {
         if (!currentGroups.includes(gid)) {
-          await groupsApi.addUser(gid, editing().id);
+          await groupsApi.addUser(gid, getId(editing()));
         }
       }
       for (const gid of currentGroups) {
         if (!selectedGroups().includes(gid)) {
-          await groupsApi.removeUser(gid, editing().id);
+          await groupsApi.removeUser(gid, getId(editing()));
         }
       }
 
@@ -137,7 +137,7 @@ const Users: Component = () => {
     const form = new FormData();
     form.append("avatar", file);
     try {
-      await usersApi.uploadAvatar(editing().id, form);
+      await usersApi.uploadAvatar(getId(editing()), form);
       load();
     } catch (err) {
       console.error(err);

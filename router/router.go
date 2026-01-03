@@ -62,6 +62,7 @@ func Serve(cfg *config.Configuration) error {
 	// User routes (admin)
 	// --------------------
 	mux.Handle("GET /api/users", authMiddleware(adminMiddleware(http.HandlerFunc(userHandler.GetAll))))
+	mux.Handle("POST /api/users", authMiddleware(adminMiddleware(http.HandlerFunc(userHandler.Create))))
 	mux.Handle("GET /api/users/{id}", authMiddleware(adminMiddleware(http.HandlerFunc(userHandler.GetByID))))
 	mux.Handle("PUT /api/users/{id}", authMiddleware(adminMiddleware(http.HandlerFunc(userHandler.Update))))
 	mux.Handle("DELETE /api/users/{id}", authMiddleware(adminMiddleware(http.HandlerFunc(userHandler.Delete))))

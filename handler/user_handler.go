@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/aminasadiam/Kasra/models"
 	"github.com/aminasadiam/Kasra/repository"
 	"github.com/aminasadiam/Kasra/utils"
 	"gorm.io/gorm"
@@ -148,6 +150,66 @@ func NewUserHandler(db *gorm.DB) *UserHandler {
 	return &UserHandler{
 		userRepo: repository.NewUserRepository(db),
 	}
+}
+
+func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Username string `json:"username"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+		Phone    string `json:"phone"`
+		RoleIDs  []uint `json:"role_ids"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		utils.ErrorResponse(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	if body.Username == "" || body.Email == "" || body.Password == "" {
+		utils.ErrorResponse(w, "username, email and password are required", http.StatusBadRequest)
+		return
+	}
+
+	// Check uniqueness
+	if _, err := h.userRepo.GetByEmail(body.Email); err == nil {
+		utils.ErrorResponse(w, "email already in use", http.StatusBadRequest)
+		return
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		utils.ErrorResponse(w, "Failed to check email uniqueness", http.StatusInternalServerError)
+		return
+	}
+	if _, err := h.userRepo.GetByUsername(body.Username); err == nil {
+		utils.ErrorResponse(w, "username already in use", http.StatusBadRequest)
+		return
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		utils.ErrorResponse(w, "Failed to check username uniqueness", http.StatusInternalServerError)
+		return
+	}
+
+	hashed, err := utils.HashPassword(body.Password)
+	if err != nil {
+		utils.ErrorResponse(w, "Failed to hash password", http.StatusInternalServerError)
+		return
+	}
+
+	user := &models.User{
+		Username: body.Username,
+		Email:    body.Email,
+		Password: hashed,
+		Phone:    body.Phone,
+	}
+
+	if err := h.userRepo.Create(user); err != nil {
+		utils.ErrorResponse(w, "Failed to create user", http.StatusInternalServerError)
+		return
+	}
+
+	// Attach roles if any
+	for _, rid := range body.RoleIDs {
+		_ = h.userRepo.AddRole(user.ID, rid)
+	}
+
+	utils.JSONResponse(w, user, http.StatusCreated)
 }
 
 func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
