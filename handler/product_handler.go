@@ -199,15 +199,35 @@ func (h *ProductHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 		groupIDs = h.getUserGroupIDs(r)
 	}
 
-	for i := range products {
-		if isAuthenticated {
-			products[i].Price = h.getProductPrice(products[i].ID, groupIDs) // فیلد موقت برای نمایش
-		} else {
-			products[i].Price = 0 // Hide price for unauthenticated users
+	// Filter products based on user groups
+	var filteredProducts []models.Product
+	for _, product := range products {
+		// If product has no group restrictions, show to everyone
+		if len(product.Groups) == 0 {
+			filteredProducts = append(filteredProducts, product)
+			continue
 		}
+
+		// If product has group restrictions, only show if user is in one of those groups
+		if isAuthenticated {
+			for _, productGroup := range product.Groups {
+				for _, userGroupID := range groupIDs {
+					if productGroup.ID == userGroupID {
+						filteredProducts = append(filteredProducts, product)
+						break
+					}
+				}
+			}
+		}
+		// If product has group restrictions and user is not authenticated, don't show it
 	}
 
-	utils.JSONResponse(w, products, http.StatusOK)
+	// Set prices to 0 for all (removing price display from response)
+	for i := range filteredProducts {
+		filteredProducts[i].Price = 0
+	}
+
+	utils.JSONResponse(w, filteredProducts, http.StatusOK)
 }
 
 func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
