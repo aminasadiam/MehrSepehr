@@ -241,10 +241,13 @@ const ProductDetail = () => {
                       <span>📝</span>
                       توضیحات
                     </h3>
-                    <p class="text-slate-600 leading-relaxed text-justify">
-                      {prod().description ||
-                        "توضیحات محصول به زودی تکمیل می‌شود."}
-                    </p>
+                    <div class="text-slate-600 leading-relaxed text-justify prose prose-sm max-w-none [&>*]:my-2 [&>h1]:text-2xl [&>h2]:text-xl [&>h3]:text-lg [&>h1]:font-bold [&>h2]:font-bold [&>h3]:font-bold [&>p]:text-slate-700 [&>ul]:list-disc [&>ul]:ml-6 [&>ol]:list-decimal [&>ol]:ml-6 [&>li]:my-1 [&>blockquote]:border-r-4 [&>blockquote]:border-indigo-500 [&>blockquote]:pl-4 [&>blockquote]:pr-4 [&>blockquote]:bg-slate-50 [&>blockquote]:py-2 [&>blockquote]:my-3 [&>a]:text-indigo-600 [&>a]:hover:underline [&>code]:bg-slate-100 [&>code]:px-2 [&>code]:py-1 [&>code]:rounded [&>pre]:bg-slate-900 [&>pre]:text-white [&>pre]:p-4 [&>pre]:rounded [&>pre]:overflow-x-auto [&>img]:rounded-lg [&>img]:my-4 [&>img]:max-w-full [&>img]:h-auto">
+                      {prod().description ? (
+                        <div innerHTML={prod().description} />
+                      ) : (
+                        <p>توضیحات محصول به زودی تکمیل می‌شود.</p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Specifications Grid */}

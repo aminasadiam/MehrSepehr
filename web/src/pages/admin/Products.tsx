@@ -13,6 +13,7 @@ import {
   getImageUrl,
 } from "../../utils/api";
 import { A } from "@solidjs/router";
+import HtmlEditor from "../../components/HtmlEditor";
 
 const Products: Component = () => {
   const [items, setItems] = createSignal<any[]>([]);
@@ -1007,19 +1008,17 @@ const Products: Component = () => {
                   <div class="md:col-span-2 space-y-2">
                     <label class="flex text-sm font-bold text-slate-800 items-center gap-2">
                       <i class="fa-solid fa-align-left text-sky-500"></i>
-                      توضیحات
+                      توضیحات (HTML)
                     </label>
-                    <textarea
-                      placeholder="توضیحات مفصل محصول را وارد کنید..."
+                    <HtmlEditor
                       value={formData().description}
-                      onInput={(e) =>
+                      onChange={(html) =>
                         setFormData({
                           ...formData(),
-                          description: e.currentTarget.value,
+                          description: html,
                         })
                       }
-                      rows={4}
-                      class="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all text-slate-800 placeholder:text-slate-400 resize-none"
+                      placeholder="توضیحات مفصل محصول را وارد کنید..."
                     />
                   </div>
                 </div>
