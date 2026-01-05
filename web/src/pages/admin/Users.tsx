@@ -102,14 +102,26 @@ const Users: Component = () => {
       const currentGroups = (editing().Groups || editing().groups || []).map(
         (g: any) => getId(g)
       );
+
+      // Add user to new groups
       for (const gid of selectedGroups()) {
         if (!currentGroups.includes(gid)) {
-          await groupsApi.addUser(gid, getId(editing()));
+          try {
+            await groupsApi.addUser(gid, getId(editing()));
+          } catch (err) {
+            console.error(`Failed to add user to group ${gid}:`, err);
+          }
         }
       }
+
+      // Remove user from unselected groups
       for (const gid of currentGroups) {
         if (!selectedGroups().includes(gid)) {
-          await groupsApi.removeUser(gid, getId(editing()));
+          try {
+            await groupsApi.removeUser(gid, getId(editing()));
+          } catch (err) {
+            console.error(`Failed to remove user from group ${gid}:`, err);
+          }
         }
       }
 
@@ -117,7 +129,7 @@ const Users: Component = () => {
       setEditing(null);
       load();
     } catch (err) {
-      console.error(err);
+      console.error("Error saving user:", err);
     }
   };
 

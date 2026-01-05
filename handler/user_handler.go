@@ -289,11 +289,15 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 			utils.ErrorResponse(w, "username cannot be empty", http.StatusBadRequest)
 			return
 		}
-		// check uniqueness if changed
-		if newUsername != existing.Username {
-			if _, err := h.userRepo.GetByUsername(newUsername); err == nil {
-				utils.ErrorResponse(w, "username already in use", http.StatusBadRequest)
-				return
+		// check uniqueness if changed (compare normalized versions)
+		existingUsernameLower := strings.ToLower(existing.Username)
+		if newUsername != existingUsernameLower {
+			if user, err := h.userRepo.GetByUsername(newUsername); err == nil {
+				// Found a user, but make sure it's not the same user
+				if user.ID != existing.ID {
+					utils.ErrorResponse(w, "username already in use", http.StatusBadRequest)
+					return
+				}
 			} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 				utils.ErrorResponse(w, "Failed to check username uniqueness", http.StatusInternalServerError)
 				return
@@ -307,10 +311,15 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 			utils.ErrorResponse(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		if newEmail != "" && newEmail != existing.Email {
-			if _, err := h.userRepo.GetByEmail(newEmail); err == nil {
-				utils.ErrorResponse(w, "email already in use", http.StatusBadRequest)
-				return
+		// compare normalized versions
+		existingEmailLower := strings.ToLower(existing.Email)
+		if newEmail != "" && newEmail != existingEmailLower {
+			if user, err := h.userRepo.GetByEmail(newEmail); err == nil {
+				// Found a user, but make sure it's not the same user
+				if user.ID != existing.ID {
+					utils.ErrorResponse(w, "email already in use", http.StatusBadRequest)
+					return
+				}
 			} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 				utils.ErrorResponse(w, "Failed to check email uniqueness", http.StatusInternalServerError)
 				return
