@@ -215,45 +215,38 @@ func (h *ProductHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Get total number of groups
-	var totalGroups int64
-	h.db.Model(&models.Group{}).Count(&totalGroups)
-
-	// Filter products based on user groups
+	// Filter products based on authentication status
 	var filteredProducts []models.Product
-	if isAdmin {
+
+	if !isAuthenticated {
+		// Unauthenticated users see all products but with price = 0
+		filteredProducts = products
+		for i := range filteredProducts {
+			filteredProducts[i].Price = 0
+		}
+	} else if isAdmin {
 		// Admins see all products
 		filteredProducts = products
+		for i := range filteredProducts {
+			filteredProducts[i].Price = 0
+		}
 	} else {
+		// Authenticated non-admin users see only products in their groups
 		for _, product := range products {
-			// If product has no group restrictions, don't show it to regular users
-			if len(product.Groups) == 0 {
-				continue
-			}
-
-			// If product is assigned to all groups, show to everyone
-			if int64(len(product.Groups)) == totalGroups {
-				filteredProducts = append(filteredProducts, product)
-				continue
-			}
-
-			// If product has group restrictions, only show if user is in one of those groups
-			if isAuthenticated {
-				for _, productGroup := range product.Groups {
-					for _, userGroupID := range groupIDs {
-						if productGroup.ID == userGroupID {
-							filteredProducts = append(filteredProducts, product)
-							break
-						}
+			// Only show products that are in at least one of user's groups
+			for _, productGroup := range product.Groups {
+				for _, userGroupID := range groupIDs {
+					if productGroup.ID == userGroupID {
+						filteredProducts = append(filteredProducts, product)
+						break
 					}
 				}
 			}
 		}
-	}
-
-	// Set prices to 0 for all (removing price display from response)
-	for i := range filteredProducts {
-		filteredProducts[i].Price = 0
+		// Set prices to 0 for all (removing price display from response)
+		for i := range filteredProducts {
+			filteredProducts[i].Price = 0
+		}
 	}
 
 	utils.JSONResponse(w, filteredProducts, http.StatusOK)
