@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"time"
 
+	"strings"
+
 	"github.com/aminasadiam/Kasra/models"
 	"github.com/aminasadiam/Kasra/repository"
 	"github.com/aminasadiam/Kasra/utils"
@@ -165,20 +167,35 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorResponse(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	if body.Username == "" || body.Email == "" || body.Password == "" {
+	// Basic presence checks
+	if strings.TrimSpace(body.Username) == "" || strings.TrimSpace(body.Email) == "" || strings.TrimSpace(body.Password) == "" {
 		utils.ErrorResponse(w, "username, email and password are required", http.StatusBadRequest)
 		return
 	}
 
-	// Check uniqueness
-	if _, err := h.userRepo.GetByEmail(body.Email); err == nil {
+	// Validate email and password
+	normEmail, err := utils.ValidateEmail(body.Email)
+	if err != nil {
+		utils.ErrorResponse(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := utils.ValidatePassword(body.Password); err != nil {
+		utils.ErrorResponse(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Normalize username to a consistent form (lowercase, trimmed)
+	normUsername := strings.ToLower(strings.TrimSpace(body.Username))
+
+	// Check uniqueness (use normalized values)
+	if _, err := h.userRepo.GetByEmail(normEmail); err == nil {
 		utils.ErrorResponse(w, "email already in use", http.StatusBadRequest)
 		return
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		utils.ErrorResponse(w, "Failed to check email uniqueness", http.StatusInternalServerError)
 		return
 	}
-	if _, err := h.userRepo.GetByUsername(body.Username); err == nil {
+	if _, err := h.userRepo.GetByUsername(normUsername); err == nil {
 		utils.ErrorResponse(w, "username already in use", http.StatusBadRequest)
 		return
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -193,8 +210,8 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := &models.User{
-		Username: body.Username,
-		Email:    body.Email,
+		Username: normUsername,
+		Email:    normEmail,
 		Password: hashed,
 		Phone:    body.Phone,
 	}
@@ -267,10 +284,41 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	// Update only provided fields
 	if body.Username != nil {
-		existing.Username = *body.Username
+		newUsername := strings.ToLower(strings.TrimSpace(*body.Username))
+		if newUsername == "" {
+			utils.ErrorResponse(w, "username cannot be empty", http.StatusBadRequest)
+			return
+		}
+		// check uniqueness if changed
+		if newUsername != existing.Username {
+			if _, err := h.userRepo.GetByUsername(newUsername); err == nil {
+				utils.ErrorResponse(w, "username already in use", http.StatusBadRequest)
+				return
+			} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+				utils.ErrorResponse(w, "Failed to check username uniqueness", http.StatusInternalServerError)
+				return
+			}
+		}
+		existing.Username = newUsername
 	}
 	if body.Email != nil {
-		existing.Email = *body.Email
+		newEmail, err := utils.ValidateEmailOptional(*body.Email)
+		if err != nil {
+			utils.ErrorResponse(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if newEmail != "" && newEmail != existing.Email {
+			if _, err := h.userRepo.GetByEmail(newEmail); err == nil {
+				utils.ErrorResponse(w, "email already in use", http.StatusBadRequest)
+				return
+			} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+				utils.ErrorResponse(w, "Failed to check email uniqueness", http.StatusInternalServerError)
+				return
+			}
+			existing.Email = newEmail
+		} else if newEmail == "" {
+			// allow clearing email? keep existing if empty input
+		}
 	}
 	if body.Phone != nil {
 		existing.Phone = *body.Phone
@@ -279,6 +327,10 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 		existing.Avatar = *body.Avatar
 	}
 	if body.Password != nil && *body.Password != "" {
+		if err := utils.ValidatePasswordOptional(*body.Password); err != nil {
+			utils.ErrorResponse(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 		hashed, err := utils.HashPassword(*body.Password)
 		if err != nil {
 			utils.ErrorResponse(w, "Failed to hash password", http.StatusInternalServerError)

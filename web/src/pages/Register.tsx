@@ -1,29 +1,60 @@
-import { createSignal } from 'solid-js';
-import { useAuth } from '../store/auth';
-import { useNavigate } from '@solidjs/router';
+import { createSignal } from "solid-js";
+import { useAuth } from "../store/auth";
+import { useNavigate } from "@solidjs/router";
+import {
+  normalizeEmail,
+  validateEmail,
+  validatePassword,
+} from "../utils/validation";
 
 export default function Register() {
-  const [username, setUsername] = createSignal('');
-  const [email, setEmail] = createSignal('');
-  const [password, setPassword] = createSignal('');
-  const [error, setError] = createSignal('');
+  const [username, setUsername] = createSignal("");
+  const [email, setEmail] = createSignal("");
+  const [password, setPassword] = createSignal("");
+  const [error, setError] = createSignal("");
   const [loading, setLoading] = createSignal(false);
   const auth = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
-    const result = await auth.register(username(), email(), password());
-    
-    if (result.success) {
-      navigate('/');
-    } else {
-      setError(result.error || 'Registration failed');
+    const uname = username().trim();
+    if (uname.length < 3) {
+      setError("Username must be at least 3 characters");
+      setLoading(false);
+      return;
     }
-    
+
+    const emailNorm = normalizeEmail(email());
+    const emailErr = validateEmail(emailNorm);
+    if (emailErr) {
+      setError(emailErr);
+      setLoading(false);
+      return;
+    }
+
+    const pwErr = validatePassword(password());
+    if (pwErr) {
+      setError(pwErr);
+      setLoading(false);
+      return;
+    }
+
+    const result = await auth.register(
+      uname.toLowerCase(),
+      emailNorm,
+      password()
+    );
+
+    if (result.success) {
+      navigate("/");
+    } else {
+      setError(result.error || "Registration failed");
+    }
+
     setLoading(false);
   };
 
@@ -31,7 +62,7 @@ export default function Register() {
     <div class="flex items-center justify-center min-h-screen bg-gray-100">
       <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
         <h2 class="text-2xl font-bold mb-6 text-center">Register</h2>
-        
+
         {error() && (
           <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error()}
@@ -40,7 +71,10 @@ export default function Register() {
 
         <form onSubmit={handleSubmit}>
           <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="username">
+            <label
+              class="block text-gray-700 text-sm font-bold mb-2"
+              for="username"
+            >
               Username
             </label>
             <input
@@ -54,7 +88,10 @@ export default function Register() {
           </div>
 
           <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="email">
+            <label
+              class="block text-gray-700 text-sm font-bold mb-2"
+              for="email"
+            >
               Email
             </label>
             <input
@@ -68,7 +105,10 @@ export default function Register() {
           </div>
 
           <div class="mb-6">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="password">
+            <label
+              class="block text-gray-700 text-sm font-bold mb-2"
+              for="password"
+            >
               Password
             </label>
             <input
@@ -86,12 +126,12 @@ export default function Register() {
             disabled={loading()}
             class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
           >
-            {loading() ? 'Registering...' : 'Register'}
+            {loading() ? "Registering..." : "Register"}
           </button>
         </form>
 
         <p class="mt-4 text-center text-sm">
-          Already have an account?{' '}
+          Already have an account?{" "}
           <a href="/login" class="text-blue-500 hover:text-blue-700">
             Login
           </a>
@@ -100,4 +140,3 @@ export default function Register() {
     </div>
   );
 }
-

@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"strings"
+
 	"github.com/aminasadiam/Kasra/models"
 	"gorm.io/gorm"
 )
@@ -25,13 +27,13 @@ func (r *UserRepository) GetByID(id uint) (*models.User, error) {
 
 func (r *UserRepository) GetByEmail(email string) (*models.User, error) {
 	var user models.User
-	err := r.db.Where("email = ?", email).Preload("Roles").Preload("Roles.Permissions").Preload("Wallet").First(&user).Error
+	err := r.db.Where("LOWER(email) = ?", strings.ToLower(strings.TrimSpace(email))).Preload("Roles").Preload("Roles.Permissions").Preload("Wallet").First(&user).Error
 	return &user, err
 }
 
 func (r *UserRepository) GetByUsername(username string) (*models.User, error) {
 	var user models.User
-	err := r.db.Where("username = ?", username).Preload("Roles").Preload("Roles.Permissions").Preload("Wallet").First(&user).Error
+	err := r.db.Where("LOWER(username) = ?", strings.ToLower(strings.TrimSpace(username))).Preload("Roles").Preload("Roles.Permissions").Preload("Wallet").First(&user).Error
 	return &user, err
 }
 
