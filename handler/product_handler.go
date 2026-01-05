@@ -209,21 +209,30 @@ func (h *ProductHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		// Get user's group IDs (not needed if admin)
+		// Get user's group IDs
 		if !isAdmin {
 			groupIDs = h.getUserGroupIDs(r)
 		}
 	}
 
-	// Filter products based on user groups (skip for admins)
+	// Get total number of groups
+	var totalGroups int64
+	h.db.Model(&models.Group{}).Count(&totalGroups)
+
+	// Filter products based on user groups
 	var filteredProducts []models.Product
 	if isAdmin {
 		// Admins see all products
 		filteredProducts = products
 	} else {
 		for _, product := range products {
-			// If product has no group restrictions, show to everyone
+			// If product has no group restrictions, don't show it to regular users
 			if len(product.Groups) == 0 {
+				continue
+			}
+
+			// If product is assigned to all groups, show to everyone
+			if int64(len(product.Groups)) == totalGroups {
 				filteredProducts = append(filteredProducts, product)
 				continue
 			}
@@ -239,7 +248,6 @@ func (h *ProductHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 			}
-			// If product has group restrictions and user is not authenticated, don't show it
 		}
 	}
 
