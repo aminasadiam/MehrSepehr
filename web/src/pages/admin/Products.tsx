@@ -75,6 +75,8 @@ const Products: Component = () => {
 
   const resetForm = () => {
     setEditId(null);
+    setGroupPrices([]);
+    setShowGroupPrices(false);
     setFormData({
       name: "",
       description: "",
@@ -106,6 +108,16 @@ const Products: Component = () => {
       const prod = fullProduct.data || p;
 
       setEditId(productId);
+
+      // Load group prices from product
+      const prices = (prod.Prices || prod.prices || [])
+        .filter((price: any) => price.GroupID ?? price.group_id) // Only group-specific prices
+        .map((price: any) => ({
+          groupId: price.GroupID ?? price.group_id,
+          price: price.Price ?? price.price ?? 0,
+        }));
+      setGroupPrices(prices);
+
       setFormData({
         name: prod.Name ?? prod.name ?? "",
         description: prod.Description ?? prod.description ?? "",
@@ -153,6 +165,16 @@ const Products: Component = () => {
       console.error("Error fetching product details:", err);
       // Fallback to original data if fetch fails
       setEditId(p.ID ?? p.id);
+
+      // Load group prices from original product
+      const prices = (p.Prices || p.prices || [])
+        .filter((price: any) => price.GroupID ?? price.group_id)
+        .map((price: any) => ({
+          groupId: price.GroupID ?? price.group_id,
+          price: price.Price ?? price.price ?? 0,
+        }));
+      setGroupPrices(prices);
+
       setFormData({
         name: p.Name ?? p.name ?? "",
         description: p.Description ?? p.description ?? "",

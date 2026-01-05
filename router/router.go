@@ -82,6 +82,7 @@ func Serve(cfg *config.Configuration) error {
 	mux.Handle("DELETE /api/products/{id}", authMiddleware(adminMiddleware(http.HandlerFunc(productHandler.Delete))))
 
 	mux.Handle("POST /api/products/{id}/images", authMiddleware(adminMiddleware(http.HandlerFunc(productHandler.UploadImage))))
+	mux.Handle("DELETE /api/products/{id}/images/{imageId}", authMiddleware(adminMiddleware(http.HandlerFunc(productHandler.DeleteImage))))
 	mux.Handle("POST /api/products/{id}/prices", authMiddleware(adminMiddleware(http.HandlerFunc(productHandler.AddPrice))))
 
 	// --------------------

@@ -158,6 +158,8 @@ export const productsApi = {
   delete: (id: number | string) => api.delete(`/products/${id}`),
   uploadImage: (id: number | string, form: FormData) =>
     api.upload(`/products/${id}/images`, form),
+  deleteImage: (productId: number | string, imageId: number | string) =>
+    api.delete(`/products/${productId}/images/${imageId}`),
   setGroupPrice: (productId: number | string, groupId: number, price: number) =>
     api.post(`/products/${productId}/prices`, { group_id: groupId, price }),
   removeGroupPrice: (productId: number | string, groupId: number) =>

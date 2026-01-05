@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/aminasadiam/Kasra/models"
@@ -450,6 +451,46 @@ func (h *ProductHandler) UploadImage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.SuccessResponse(w, "Image uploaded successfully", productImage, http.StatusCreated)
+}
+
+func (h *ProductHandler) DeleteImage(w http.ResponseWriter, r *http.Request) {
+	imageIDStr := r.PathValue("imageId")
+	imageID, err := strconv.ParseUint(imageIDStr, 10, 32)
+	if err != nil {
+		utils.ErrorResponse(w, "Invalid image ID", http.StatusBadRequest)
+		return
+	}
+
+	// Get the image record
+	var productImage models.ProductImage
+	if err := h.db.First(&productImage, imageID).Error; err != nil {
+		utils.ErrorResponse(w, "Image not found", http.StatusNotFound)
+		return
+	}
+
+	// Extract filename from URL
+	url := productImage.URL
+	parts := strings.Split(url, "/")
+	if len(parts) == 0 {
+		utils.ErrorResponse(w, "Invalid image URL", http.StatusBadRequest)
+		return
+	}
+	filename := parts[len(parts)-1]
+
+	// Delete the file from disk
+	filePath := filepath.Join("./uploads/products", filename)
+	if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
+		// Log the error but continue with DB deletion
+		fmt.Printf("Warning: Failed to delete image file %s: %v\n", filePath, err)
+	}
+
+	// Delete from database
+	if err := h.db.Delete(&productImage).Error; err != nil {
+		utils.ErrorResponse(w, "Failed to delete image record", http.StatusInternalServerError)
+		return
+	}
+
+	utils.SuccessResponse(w, "Image deleted successfully", nil, http.StatusOK)
 }
 
 func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
